@@ -58,12 +58,13 @@ Read `{{PLAN_FILE}}` and present:
 Ask the user directly for approval (per `templates/user-questions.md`).
 Use this question and these options:
 
-- Question: `Approve the implementation plan?`
+- Question: `Approve this implementation plan?`
+  Context: `Next step is documentation planning, then handoff to implement.`
 - Options:
-  - `Approve` — accept the plan and continue to **Documentation Planning** (step 6)
-  - `Revise` — return to step 3 with feedback
-  - `Simplify` — scope the plan down before approval
-  - `Reject` — stop here because the plan is not viable
+  - `Approve` — accept the plan and continue
+  - `Revise` — send it back with your feedback
+  - `Simplify` — shrink scope, then re-approve
+  - `Reject` — stop; the plan is not viable
 
 Record the user's decision in `project.md`. If approved, proceed to step 6 (documentation planning), then handoff on step 7.
 If changes requested, return to step 3 (plan creation).

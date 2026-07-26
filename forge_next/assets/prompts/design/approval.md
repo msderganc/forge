@@ -36,14 +36,15 @@ Then ask the user directly for approval (per `templates/user-questions.md`).
 
 ### Solution decision
 
-Use this question and these options:
+Use this question and these options (rewrite jargon at presentation time if needed):
 
-- Question: `Approve the recommended solution for implementation?`
+- Question: `Go with the recommended solution?`
+  Context: `This locks the approach before we write/finalize the design spec (when required) and hand off to planning.`
 - Options:
-  - `Approve` — accept the recommendation; continue toward handoff (`plan` after spec gate clears when required)
-  - `Revise` — return to Stage 2 with feedback
-  - `Alternate` — pick a different scored alternative
-  - `Reject` — stop here because no solution is acceptable
+  - `Approve` — use the recommendation and continue
+  - `Revise` — keep exploring with your feedback
+  - `Alternate` — pick a different scored option instead
+  - `Reject` — stop; none of these are acceptable
 
 ### Design spec decision (only when `SPEC_REQUIRED` is **yes**)
 

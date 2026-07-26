@@ -176,7 +176,9 @@ If a resumed session finds `Step: gate-N-waiting`, the PM re-fires that gate. If
 
 ## User Question Templates
 
-Copy-paste skeletons. Replace bracketed placeholders with content read from the intermediate artifacts. Each gate should be presented as a concise user question with clear options.
+Copy-paste skeletons. Replace bracketed placeholders with content from the intermediate artifacts. Present questions per `templates/user-questions.md` (plain English, one-sentence context when needed). Keep option `id`s stable for Studio / event logging — only the visible prompt/label/description text is user-facing.
+
+Internal notes for the PM (do **not** dump into the user prompt): Q1 options come from How-Might-We candidates in `solution-requirements.md`; Q2 adds optional advanced techniques on top of the always-on core (SCAMPER, Reverse Brainstorming, Constraint Removal); Gate 2 priority maps to rubric weights (Quality→Q, Time→T+E, Risk→R+C, Balanced→all 1.0).
 
 ### Gate 1 (Level 1)
 
@@ -185,23 +187,23 @@ Ask the user:
 [
   {
     "id": "gate1_hmw",
-    "prompt": "Which How-Might-We framing should drive divergence?",
+    "prompt": "Which problem framing should we use when brainstorming?\n\nWe'll generate solution ideas from the framing you pick.",
     "allow_multiple": false,
     "options": [
-      {"id": "hmw_1", "label": "[HMW #1 truncated] (Recommended)", "description": "[short rationale]"},
-      {"id": "hmw_2", "label": "[HMW #2 truncated]", "description": "[short rationale]"},
-      {"id": "hmw_3", "label": "[HMW #3 truncated]", "description": "[short rationale]"}
+      {"id": "hmw_1", "label": "[framing #1 truncated] (Recommended)", "description": "[why this framing fits in one short clause]"},
+      {"id": "hmw_2", "label": "[framing #2 truncated]", "description": "[why this framing fits in one short clause]"},
+      {"id": "hmw_3", "label": "[framing #3 truncated]", "description": "[why this framing fits in one short clause]"}
     ]
   },
   {
     "id": "gate1_techniques",
-    "prompt": "Which advanced divergent techniques should the Architect also apply? (SCAMPER + Reverse + Constraint Removal are always included)",
+    "prompt": "Want any extra brainstorming methods?\n\nThree standard methods already run. Pick extras only if you want a wider idea set (or choose none).",
     "allow_multiple": true,
     "options": [
-      {"id": "first_principles", "label": "First Principles", "description": "Strip to invariants; rebuild from fundamentals"},
-      {"id": "analogical_reasoning", "label": "Analogical Reasoning", "description": "Import solution shapes from other domains (distributed systems, compilers, biology, ...)"},
-      {"id": "assumption_reversal", "label": "Assumption Reversal", "description": "List and flip implicit assumptions the obvious solution makes"},
-      {"id": "triz_contradiction", "label": "TRIZ Contradiction", "description": "Resolve we-want-X-and-not-X tensions via segmentation / asymmetry / dynamics / prior action"}
+      {"id": "first_principles", "label": "Rebuild from basics", "description": "Ignore current design habits; reason from requirements up"},
+      {"id": "analogical_reasoning", "label": "Borrow from other domains", "description": "Adapt patterns from similar problems elsewhere"},
+      {"id": "assumption_reversal", "label": "Flip assumptions", "description": "List what we take for granted and try the opposite"},
+      {"id": "triz_contradiction", "label": "Resolve trade-off tensions", "description": "When we want two conflicting things, look for structural ways to get both"}
     ]
   }
 ]
@@ -214,7 +216,7 @@ Ask the user:
 [
   {
     "id": "gate2_candidates",
-    "prompt": "Which solution families should be carried into full scored comparison?",
+    "prompt": "Which solution ideas should we score in detail?\n\nPick 2–4. Unpicked ideas stay as notes and won't be ranked.",
     "allow_multiple": true,
     "options": [
       {"id": "candidate_1", "label": "[Candidate 1 title]", "description": "[1-line pros/cons summary]"},
@@ -225,19 +227,19 @@ Ask the user:
   },
   {
     "id": "gate2_priority",
-    "prompt": "Which scoring dimension matters most for this task?",
+    "prompt": "What should matter most when we rank these solutions?\n\nYour pick tilts the scoring weights; it does not discard other criteria.",
     "allow_multiple": false,
     "options": [
       {"id": "quality", "label": "Quality", "description": "Correctness, maintainability, reliability"},
-      {"id": "time", "label": "Time", "description": "Velocity, time-to-ship (collapses rubric T+E)"},
-      {"id": "risk", "label": "Risk", "description": "Security, data loss, rollback cost (collapses rubric R+C)"},
-      {"id": "balanced", "label": "Balanced", "description": "No dimension dominates"}
+      {"id": "time", "label": "Speed to ship", "description": "Finish sooner; prefer lower build effort"},
+      {"id": "risk", "label": "Risk", "description": "Security, data loss, and hard-to-undo mistakes"},
+      {"id": "balanced", "label": "Balanced", "description": "No single factor dominates"}
     ]
   }
 ]
 ```
 
-**Level 2 variant:** Omit the first question entirely. Pass only the priority-dimension question. The families list is pre-cut by ICE or kept whole if ≤4.
+**Level 2 variant:** Omit the first question entirely. Pass only the priority question. The idea list is pre-cut by ICE or kept whole if ≤4.
 
 ### Gate 2 Q3 — Tiebreak (any level, escalation-forced)
 
@@ -246,11 +248,11 @@ Ask the user:
 [
   {
     "id": "gate2_tiebreak",
-    "prompt": "The top candidates scored nearly equivalently. Which do you prefer?",
+    "prompt": "The top options scored almost the same. Which should we go with?",
     "allow_multiple": false,
     "options": [
-      {"id": "candidate_a", "label": "[Candidate A title]", "description": "[headline trade-off]"},
-      {"id": "candidate_b", "label": "[Candidate B title]", "description": "[headline trade-off]"}
+      {"id": "candidate_a", "label": "[Candidate A title]", "description": "[main trade-off in plain words]"},
+      {"id": "candidate_b", "label": "[Candidate B title]", "description": "[main trade-off in plain words]"}
     ]
   }
 ]
@@ -258,58 +260,57 @@ Ask the user:
 
 ## Fallback
 
-If the environment lacks Studio (`templates/studio.md`) or structured question UI, degrade to the plain-text numbered-prompt patterns in the **Fallback** section below. Gate semantics are identical; only presentation changes.
+If the environment lacks Studio (`templates/studio.md`) or structured question UI, degrade to the plain-text numbered-prompt patterns below. Gate semantics are identical; only presentation changes. Still follow `templates/user-questions.md`.
 
 ### Gate 1 fallback
 
 ```
-Gate 1 — Pre-Divergence
+Before brainstorming solutions
 
-Which How-Might-We framing should drive divergence?
-  1. [HMW #1]  (Recommended)
-  2. [HMW #2]
-  3. [HMW #3]
+Which problem framing should we use? (We'll generate ideas from this one.)
+  1. [framing #1]  (Recommended)
+  2. [framing #2]
+  3. [framing #3]
 
-Which advanced divergent techniques should the Architect also apply?
-(SCAMPER + Reverse Brainstorming + Constraint Removal are always on.
-Comma-separated numbers, or "none" to run only the core three.)
-  1. First Principles Decomposition
-  2. Analogical Reasoning / Cross-Domain
-  3. Assumption Reversal
-  4. TRIZ Contradiction Lite
+Want any extra brainstorming methods? Three standard methods already run.
+Comma-separated numbers, or "none".
+  1. Rebuild from basics
+  2. Borrow from other domains
+  3. Flip assumptions
+  4. Resolve trade-off tensions
 
-Enter: <HMW#> / <technique#s or "none">
+Enter: <framing#> / <method#s or "none">
 ```
 
 ### Gate 2 Q1+Q2 fallback
 
 ```
-Gate 2 — Pre-Scoring
+Before ranking solutions
 
-Which solution families should be carried into full scored comparison?
-(Comma-separated numbers, 2–4 picks. Unpicked candidates go to "Also Considered".)
+Which solution ideas should we score in detail?
+(Comma-separated numbers, 2–4 picks. Unpicked ideas stay as notes.)
   1. [Candidate 1 title] — [1-line summary]
   2. [Candidate 2 title] — [1-line summary]
   3. [Candidate 3 title] — [1-line summary]
   4. [Candidate 4 title] — [1-line summary]
 
-Which scoring dimension matters most?
-  1. Quality  — correctness, maintainability, reliability
-  2. Time     — velocity, time-to-ship
-  3. Risk     — security, data loss, rollback cost
-  4. Balanced — no dimension dominates
+What should matter most when we rank them?
+  1. Quality — correctness, maintainability, reliability
+  2. Speed to ship — finish sooner / lower build effort
+  3. Risk — security, data loss, hard-to-undo mistakes
+  4. Balanced — no single factor dominates
 
-Enter: <family#s> / <priority#>
+Enter: <idea#s> / <priority#>
 ```
 
 ### Gate 2 Q3 tiebreak fallback
 
 ```
-Gate 2 Tiebreak — Escalation
+Close call — pick a winner
 
-The top candidates scored within 0.5 of each other. Which do you prefer?
-  1. [Candidate A title] — [headline trade-off]
-  2. [Candidate B title] — [headline trade-off]
+The top options scored almost the same. Which should we go with?
+  1. [Candidate A title] — [main trade-off]
+  2. [Candidate B title] — [main trade-off]
 
 Enter: <choice#>
 ```

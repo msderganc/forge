@@ -124,8 +124,8 @@ def build_handoff_multiselect_payload(
         "type": "forge_handoff_multiselect",
         "skill": skill_name,
         "allow_multiple": True,
-        "title": f"Next after {skill_name}",
-        "prompt": "Which Forge workflow(s) should run next? (multiselect)",
+        "title": f"What next after {skill_name}?",
+        "prompt": "What should we do next? You can pick more than one.",
         "options": options,
         "default_option_ids": default_ids,
         "shortcuts": {

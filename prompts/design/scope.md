@@ -96,17 +96,19 @@ Also log the same tier, Recommended scope, and any Scope expansion under section
 
 First, infer task type and layers from the user's initial description. If
 anything is unclear, ask the user directly to confirm (per
-`templates/user-questions.md`).
+`templates/user-questions.md` — plain English, short context).
 
-- Question 1: `What type of task is this?`
-  - `Feature` — new functionality or enhancement
-  - `Bugfix` — fix broken behavior
-  - `Refactor` — improve structure without changing behavior
-- Question 2: `Which layers does this task touch?`
-  - `Frontend` — UI or client-side changes
-  - `Backend` — API or server-side changes
-  - `Infra` — infrastructure, CI/CD, or deploy
-  - `Something else` — let the user specify manually
+- Question 1: `What kind of work is this?`
+  Context: `This picks the default team shape and review emphasis.`
+  - `Feature` — add or improve behavior users can notice
+  - `Bugfix` — something is broken or wrong today
+  - `Refactor` — restructure code without changing behavior
+- Question 2: `Which parts of the stack does this touch?`
+  Context: `Pick all that apply — this decides who we involve (e.g. security on backend/infra).`
+  - `Frontend` — UI or client-side
+  - `Backend` — API, services, or server-side logic
+  - `Infra` — CI/CD, deploy, hosting, or ops config
+  - `Something else` — say what in your own words
 
 ### File-count hint (secondary)
 

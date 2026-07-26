@@ -22,22 +22,22 @@ Example: "Admin logs in \u2192 clicks 'Upload' \u2192 selects file \u2192 system
 
 ### 2. Entry Point (entry_point)
 
-Which entry point will the flow use? (Highest-fidelity available from detected options)
+How should this flow start? Prefer the most realistic option available.
 
-Options: `ui` | `http` | `cli` | `module`
+Options: `ui` (browser) | `http` (API) | `cli` (command line) | `module` (call code directly)
 
 Your choice: ___________
 
 ### 3. Roles and Permissions Matrix (roles)
 
-Which user roles should this flow test?
+Which user roles should this flow cover?
 
-**Default:** The project-discovered roles from step 1: {{ROLES}}
+**Default from project detection:** {{ROLES}}
 
 **Options:**
-- Test all discovered roles (multi-role matrix)
-- Test a subset (e.g., "admin, member" only)
-- Single-role only (e.g., testing a public endpoint; role drops to `["anonymous"]`)
+- All discovered roles
+- A subset (e.g. `admin, member`)
+- One role only (public/anonymous flows use `["anonymous"]`)
 
 Answer (comma-separated, or "all"):
 
@@ -123,8 +123,9 @@ These samples will be used to generate data-pack variants:
 
 1. **Read the plan:** Review step 3 in the plan file to understand the scope-capture requirements.
 
-2. **Ask the user:** Follow the interaction pattern in `templates/user-questions.md`. For each question above:
-   - Present the question
+2. **Ask the user:** Follow `templates/user-questions.md` (plain English, short context). For each question above:
+   - Present the question in everyday language
+   - Add one sentence of context when the choice isn't obvious
    - Offer concrete options if applicable
    - Wait for the user's reply
    - Record the answer in the section above
