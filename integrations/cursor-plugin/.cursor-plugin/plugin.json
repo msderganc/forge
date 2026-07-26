@@ -1,6 +1,6 @@
 {
   "name": "forge",
-  "version": "1.10.0",
+  "version": "1.10.1",
   "description": "Forge workflow commands and agent skills for Cursor. Requires the `forge` CLI on PATH (pipx install forge-next).",
   "components": {
     "commands": {

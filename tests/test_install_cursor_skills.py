@@ -28,6 +28,14 @@ def test_install_cursor_plugin_bundles_skills(
     assert skills_root.is_dir()
     assert (skills_root / "forge-plan" / "SKILL.md").is_file()
     assert (skills_root / "templates" / "plan-modes.md").is_file()
+    # Skill wrappers resolve `templates/...` relative to the skill dir.
+    assert (
+        skills_root / "forge-ux-review" / "templates" / "ux-review-criteria.md"
+    ).is_file()
+    assert (skills_root / "forge-plan" / "templates" / "plan-modes.md").is_file()
+    assert (
+        skills_root / "forge-diagnose" / "templates" / "diagnose-execution-playbooks.md"
+    ).is_file()
 
     manifest = (plugin / ".cursor-plugin" / "plugin.json").read_text(encoding="utf-8")
     assert '"skills"' in manifest

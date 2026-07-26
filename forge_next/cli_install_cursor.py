@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 
 from forge_next.cli_install_io import copytree_replace, default_cursor_local_plugins_dir
-from forge_next.cli_install_templates import copy_skill_templates
+from forge_next.cli_install_templates import bundle_skill_templates
 
 
 def _install_cursor_plugin_ship_skill(repo_root: Path, plugin_root: Path) -> None:
@@ -32,7 +32,7 @@ def _install_cursor_plugin_skills(repo_root: Path, plugin_root: Path) -> list[st
         shutil.rmtree(skills_dst)
     shutil.copytree(src, skills_dst)
 
-    copy_skill_templates(repo_root, skills_dst / "templates")
+    bundle_skill_templates(repo_root, skills_dst)
 
     _install_cursor_plugin_ship_skill(repo_root, plugin_root)
 

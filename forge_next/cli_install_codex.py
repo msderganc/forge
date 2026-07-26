@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 
 from forge_next.cli_install_io import copytree_replace, default_codex_skills_dir
-from forge_next.cli_install_templates import copy_skill_templates
+from forge_next.cli_install_templates import bundle_skill_templates
 
 
 def install_codex_skills(
@@ -26,7 +26,7 @@ def install_codex_skills(
     )
     dst = base / "forge"
     copytree_replace(src, dst)
-    copy_skill_templates(repo_root, dst / "templates")
+    bundle_skill_templates(repo_root, dst)
     return str(dst), warnings
 
 
