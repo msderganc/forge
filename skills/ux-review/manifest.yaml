@@ -1,0 +1,66 @@
+manifest_version: 1
+skill: ux-review
+max_step: 6
+cli_flags:
+  - name: "--base-url"
+    type: str
+    default: null
+    help: "Application base URL to review"
+steps:
+  - step: 1
+    phase: Orient
+    prompt: ux_review/orient
+    variables_callable: "scripts.ux_review.ux_review_vars:build_variables"
+    todos:
+      - content: Map purpose, users, IA, features, and critical journeys
+        activeForm: Orienting on the product
+      - content: Confirm base URL and roles to review
+        activeForm: Confirming entry surfaces
+  - step: 2
+    phase: Review plan
+    prompt: ux_review/plan
+    variables_callable: "scripts.ux_review.ux_review_vars:build_variables"
+    todos:
+      - content: Write the structured review plan and seed the coverage checklist
+        activeForm: Planning the UX review
+  - step: 3
+    phase: Browser walkthrough
+    prompt: ux_review/walkthrough
+    variables_callable: "scripts.ux_review.ux_review_vars:build_variables"
+    todos:
+      - content: Visit every in-scope page; exercise controls and workflows
+        activeForm: Walking the application
+      - content: Capture screenshots; keep the coverage checklist current
+        activeForm: Updating coverage evidence
+  - step: 4
+    phase: States & viewports
+    prompt: ux_review/states
+    variables_callable: "scripts.ux_review.ux_review_vars:build_variables"
+    todos:
+      - content: Force empty, loading, validation, error, and success states
+        activeForm: Exercising UI states
+      - content: Spot-check agreed viewports (desktop / tablet / mobile)
+        activeForm: Checking responsiveness
+  - step: 5
+    phase: Findings
+    prompt: ux_review/findings
+    variables_callable: "scripts.ux_review.ux_review_vars:build_variables"
+    todos:
+      - content: Document findings with severity, impact, repro, and recommendations
+        activeForm: Writing UX findings
+  - step: 6
+    phase: Report + handoff
+    prompt: ux_review/report
+    variables_callable: "scripts.ux_review.ux_review_vars:build_variables"
+    todos:
+      - content: Produce the prioritized report, themes, quick wins, and coverage record
+        activeForm: Finalizing the UX report
+gates:
+  - id: plan_gate
+    steps: [3]
+    kind: python
+    callable: "scripts.ux_review.ux_review_vars:exit_if_plan_gate_fails"
+  - id: findings_gate
+    steps: [6]
+    kind: python
+    callable: "scripts.ux_review.ux_review_vars:exit_if_findings_gate_fails"

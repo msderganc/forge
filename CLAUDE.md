@@ -8,6 +8,7 @@ This project has a knowledge graph at `graphify-out/` with god nodes, community 
 - IF `graphify-out/wiki/index.md` EXISTS, navigate it instead of reading raw files.
 - For cross-module "how does X relate to Y" questions, prefer `graphify query "<question>"`, `graphify path "<A>" "<B>"`, or `graphify explain "<concept>"` over grep — these traverse EXTRACTED + INFERRED edges instead of scanning files.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+- **Corpus hygiene:** Graphify reads **`.graphifyignore`**, not `.gitignore`. Always exclude runtime/tooling dumps (`.forge/`, `.codex/`, `.pyscn/`, `.skylos/`, `.serena/`, `.venv/`, `graphify-out/`, `dist/`/`build/`, caches). Add new dump dirs to `.graphifyignore`; after changes, purge `graphify-out/cache` and run `graphify update . --force`.
 
 ### Forge workflow skills (`forge:*` slash commands)
 

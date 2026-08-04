@@ -1,0 +1,33 @@
+# Graphify corpus excludes — keep the knowledge graph on product source,
+# not runtime/tooling dumps. (Graphify does not read .gitignore.)
+
+# Forge / Codex runtime & session state
+.forge/
+.codex/
+.serena/
+
+# Structural-quality / analyzer caches
+.pyscn/
+.skylos/
+
+# Python / packaging noise
+.venv/
+.pytest_cache/
+__pycache__/
+*.egg-info/
+dist/
+build/
+.mypy_cache/
+.ruff_cache/
+
+# Graphify's own outputs (avoid self-indexing)
+graphify-out/
+
+# Local secrets / env
+.pypirc
+pypi-token.env
+.env
+.env.*
+
+# Cursor local hooks (generated)
+.cursor/hooks.json

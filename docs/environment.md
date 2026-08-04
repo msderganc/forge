@@ -50,6 +50,7 @@ See [structural-quality.md](structural-quality.md).
 | `FORGE_USE_LAUNCHER` | Set by `forge` CLI (internal) |
 | `FORGE_ASCII` | ASCII-only banners (Windows consoles) |
 | `FORGE_SKIP_SUBAGENT_LIFECYCLE` | Disable Cursor subagent hooks |
+| `FORGE_SKILL_ENGINE` | Default on. Set to `0` to force legacy skill orchestrator bodies instead of `run_skill` (see [declarative-skills.md](declarative-skills.md)) |
 
 ## Studio (internal)
 

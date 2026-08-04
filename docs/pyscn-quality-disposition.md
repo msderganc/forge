@@ -2,6 +2,10 @@
 
 This document plans how Forge treats **pyscn** findings in this repository. It complements [`docs/structural-quality.md`](structural-quality.md), which covers probe install and skill-chain usage.
 
+## Measurement boundary
+
+Complexity / quality gates for this repo measure **`scripts/`** and **`forge_next/`** only (plus shrinking tests when relevant). Ignore packaging artifacts under **`build/`** — they are not product code even when present on disk after `python -m build`.
+
 ## Current baseline (2026-07)
 
 Full-tree `pyscn check .` (complexity + dead code, clones skipped):

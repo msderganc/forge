@@ -1,8 +1,8 @@
-"""Design spec → issues gate for develop step 8 (handoff).
+"""Design spec → issues gate for design step 8 (handoff).
 
-Reads `.design-spec-issues.json` beside the design state file when
-``spec_required`` is true. Medium/large scope tiers require the approved
-design spec decomposed into plan-ready issues (beads when available).
+Shape of ``.design-spec-issues.json`` is validated via ``schema_gate``.
+Residual checks: ``spec_path`` match vs design-spec-gate sidecar and boolean
+invariants (``issues_written`` / ``user_confirmed``).
 """
 
 from __future__ import annotations
@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from scripts.develop import spec_gate
+from scripts.shared.schema_gate import validate_json_shape
 from scripts.shared.workflow_gate import (
     exit_if_gate_fails as _exit_if_gate_fails,
     gate_sidecar_path as _gate_sidecar_path,
@@ -19,9 +20,11 @@ from scripts.shared.workflow_gate import (
 )
 
 SPEC_ISSUES_FILE = ".design-spec-issues.json"
+SPEC_ISSUES_SCHEMA = "schemas/sidecars/design/design-spec-issues.schema.json"
 
 __all__ = [
     "SPEC_ISSUES_FILE",
+    "SPEC_ISSUES_SCHEMA",
     "gate_sidecar_path",
     "load_gate_json",
     "validate_spec_issues_gate",
@@ -35,45 +38,84 @@ def gate_sidecar_path(state_path: Path) -> Path:
     return _gate_sidecar_path(state_path, SPEC_ISSUES_FILE)
 
 
-def _validate_issues_list(issues: Any) -> list[str]:
-    problems: list[str] = []
-    if not isinstance(issues, list):
-        return ["`issues` must be a non-empty array."]
-    if not issues:
-        return ["`issues` must contain at least one entry."]
+def _repo_root_from_state(state_path: Path) -> Path:
+    cur = state_path.resolve().parent
+    for p in [cur, *cur.parents]:
+        if (p / ".git").is_dir():
+            return p
+    try:
+        return state_path.resolve().parents[3]
+    except IndexError:
+        return Path.cwd().resolve()
 
-    for idx, item in enumerate(issues, start=1):
-        if not isinstance(item, dict):
-            problems.append(f"Issue {idx}: must be an object.")
-            continue
-        title = str(item.get("title", "")).strip()
-        if not title:
-            problems.append(f"Issue {idx}: missing non-empty `title`.")
-        summary = str(item.get("summary", "")).strip()
-        if not summary:
-            problems.append(f"Issue {idx}: missing non-empty `summary`.")
-        sections = item.get("spec_sections")
-        if not isinstance(sections, list) or not sections:
-            problems.append(f"Issue {idx}: `spec_sections` must be a non-empty array.")
-        criteria = item.get("acceptance_criteria")
-        if not isinstance(criteria, list) or not criteria:
-            problems.append(
-                f"Issue {idx}: `acceptance_criteria` must be a non-empty array."
+
+def _validate_residual(
+    data: dict[str, Any], state_path: Path
+) -> tuple[bool, str]:
+    """Path match vs design-spec-gate + boolean invariants."""
+    spec_gate_data = load_gate_json(spec_gate.gate_sidecar_path(state_path))
+    expected_spec = ""
+    if spec_gate_data:
+        expected_spec = str(spec_gate_data.get("spec_path", "")).strip()
+
+    spec_raw = str(data.get("spec_path", "")).strip()
+    if not spec_raw:
+        return False, f"Spec issues gate: `spec_path` must be set in `{SPEC_ISSUES_FILE}`."
+    if expected_spec and spec_raw != expected_spec:
+        return (
+            False,
+            f"Spec issues gate: `spec_path` ({spec_raw!r}) must match "
+            f"`.design-spec-gate.json` ({expected_spec!r}).",
+        )
+
+    for key in ("issues_written", "user_confirmed"):
+        if not data.get(key):
+            return (
+                False,
+                f"Spec issues gate: `{key}` must be true in `{SPEC_ISSUES_FILE}`.",
             )
-    return problems
+    return True, ""
 
 
 def validate_spec_issues_gate(
-    state_path: Path,
-    spec_required: bool,
+    state_path: Path | None = None,
+    spec_required: bool | None = None,
     *,
     allow_incomplete: bool = False,
     override_reason: str = "",
     override_requested_by: str = "",
     override_follow_up: str = "",
     override_timestamp: str = "",
-) -> tuple[bool, str]:
-    """Return (ok, message). When ``spec_required`` is false, always ok."""
+    state: Any = None,
+    step: int | None = None,
+    gate: Any = None,
+) -> tuple[bool, str] | None:
+    """Return (ok, message), or exit via gate adapter when ``state``/``gate`` set."""
+    del override_requested_by
+    if state is not None and gate is not None:
+        from scripts.shared.orchestrator import now_iso
+
+        sp = state_path if state_path is not None else Path(".")
+        required = bool(state.custom.get("spec_required"))
+        if step is not None and step < 8:
+            return None
+        allow = bool(state.custom.get("allow_issues_incomplete"))
+        ok, msg = validate_spec_issues_gate(
+            sp,
+            required,
+            allow_incomplete=allow,
+            override_reason=str(state.custom.get("issues_override_reason") or ""),
+            override_follow_up=str(state.custom.get("issues_override_follow_up") or ""),
+            override_timestamp=now_iso(),
+        )
+        exit_if_gate_fails(ok, msg)
+        return None
+
+    if state_path is None or spec_required is None:
+        raise TypeError(
+            "validate_spec_issues_gate requires state_path and spec_required"
+        )
+
     if not spec_required:
         return True, ""
 
@@ -101,41 +143,14 @@ def validate_spec_issues_gate(
             f"({side}). Complete spec → issues decomposition on step 7 before step 8.",
         )
 
-    spec_gate_data = load_gate_json(spec_gate.gate_sidecar_path(state_path))
-    expected_spec = ""
-    if spec_gate_data:
-        expected_spec = str(spec_gate_data.get("spec_path", "")).strip()
+    repo = _repo_root_from_state(state_path)
+    ok, msg = validate_json_shape(
+        data, SPEC_ISSUES_SCHEMA, repo_root=repo, label=SPEC_ISSUES_FILE
+    )
+    if not ok:
+        return False, msg
 
-    spec_raw = str(data.get("spec_path", "")).strip()
-    if not spec_raw:
-        return False, f"Spec issues gate: `spec_path` must be set in `{SPEC_ISSUES_FILE}`."
-    if expected_spec and spec_raw != expected_spec:
-        return (
-            False,
-            f"Spec issues gate: `spec_path` ({spec_raw!r}) must match "
-            f"`.design-spec-gate.json` ({expected_spec!r}).",
-        )
-
-    for key in ("issues_written", "user_confirmed"):
-        if not data.get(key):
-            return (
-                False,
-                f"Spec issues gate: `{key}` must be true in `{SPEC_ISSUES_FILE}`.",
-            )
-
-    mode = str(data.get("beads_mode", "")).strip().lower()
-    if mode not in ("active", "degraded", "none"):
-        return (
-            False,
-            f"Spec issues gate: `beads_mode` must be one of active|degraded|none "
-            f"in `{SPEC_ISSUES_FILE}`.",
-        )
-
-    issue_problems = _validate_issues_list(data.get("issues"))
-    if issue_problems:
-        return False, "Spec issues gate:\n- " + "\n- ".join(issue_problems)
-
-    return True, ""
+    return _validate_residual(data, state_path)
 
 
 def exit_if_gate_fails(ok: bool, msg: str) -> None:

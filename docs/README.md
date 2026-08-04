@@ -19,6 +19,7 @@ User-facing guides for installing and running Forge workflows. Internal design n
 | [pyscn-quality-disposition.md](pyscn-quality-disposition.md) | Forge repo pyscn complexity/clone disposition and CI thresholds |
 | [sessions.md](sessions.md) | Parallel session directories under `.forge/sessions/` |
 | [environment.md](environment.md) | `FORGE_*` environment variables |
+| [declarative-skills.md](declarative-skills.md) | Skill manifests, runner, gate kinds, asset sync, kill-switch |
 
 ## Contributors and agents
 

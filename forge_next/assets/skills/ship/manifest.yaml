@@ -1,0 +1,17 @@
+manifest_version: 1
+skill: ship
+max_step: 1
+# Dual layout: engine manifest here; SKILL.md remains under .cursor/skills/ship/
+pre_run: "scripts.ship.ship_effects:pre_run"
+handoff_skill: ship
+steps:
+  - step: 1
+    phase: Graphify preflight (before commit)
+    prompt: ship/preflight
+    variables_callable: "scripts.ship.ship_vars:build_variables"
+    todos:
+      - content: Refresh graphify index for shipped code
+        activeForm: Refreshing graphify index
+      - content: "Continue ship skill: status, commit, push, PR, publish"
+        activeForm: Running ship preflight
+gates: []

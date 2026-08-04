@@ -9,6 +9,10 @@ GRAPHIFY_DEVELOPER_INSTRUCTIONS_LEAD = (
     "continue without waiting. Read graphify-out/GRAPH_REPORT.md before blind grep; use "
     "graphify query/path/explain for cross-module questions. After edits you may run "
     "`graphify update .` (AST-only). Ship (`forge ship --step 1`) prints the GRAPHIFY banner. "
+    "Corpus: Graphify uses `.graphifyignore` (not `.gitignore`) — keep `.forge/`, `.codex/`, "
+    "`.pyscn/`, `.skylos/`, `.serena/`, venvs, `graphify-out/`, and analyzer/session dumps excluded; "
+    "extend `.graphifyignore` for new dump dirs, then purge `graphify-out/cache` and "
+    "`graphify update . --force`. "
     "Disable: FORGE_SKIP_GRAPHIFY=1 or forge graphify off."
 )
 

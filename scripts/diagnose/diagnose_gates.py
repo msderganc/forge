@@ -371,3 +371,91 @@ def check_step7_closure_gate(state: SkillState, sp: Path, step: int) -> Diagnose
         state_path=str(sp),
         non_overridable=non_overridable or None,
     )
+
+
+# ---------------------------------------------------------------------------
+# Declarative skill_runner adapters (soft-gate; no skill_runner import)
+# ---------------------------------------------------------------------------
+
+_GATE_PASSED_KEY = "_diagnose_gate_passed"
+_GATE_NEXT_KEY = "_diagnose_gate_next"
+_GATE_BODY_KEY = "_diagnose_gate_body"
+
+
+def _apply_cached_soft_gate(state: SkillState, *, step: int) -> None:
+    """Apply runner control flags from vars-cached gate result.
+
+    ``diagnose_vars`` runs the real ``check_*`` validators (so template
+    placeholders get gate bodies before render). Declared gates call these
+    adapters afterward to set ``_await_same_step`` / ``_next_step`` without
+    double-incrementing regen attempt counters.
+    """
+    passed = state.custom.pop(_GATE_PASSED_KEY, True)
+    if passed in (True, "True", "true", "1"):
+        state.custom.pop(_GATE_NEXT_KEY, None)
+        state.custom.pop(_GATE_BODY_KEY, None)
+        return
+
+    state.custom["_await_same_step"] = True
+    next_raw = state.custom.pop(_GATE_NEXT_KEY, None)
+    if next_raw is not None:
+        try:
+            state.custom["_next_step"] = int(next_raw)
+        except (TypeError, ValueError):
+            state.custom["_next_step"] = step
+    body = state.custom.pop(_GATE_BODY_KEY, None)
+    if body:
+        existing = str(state.custom.get("_append_body") or "")
+        block = str(body).strip()
+        state.custom["_append_body"] = (
+            f"{existing}\n\n---\n\n{block}" if existing else f"\n\n---\n\n{block}"
+        )
+
+
+def run_problem_spec_advisory_gate(
+    *, state: SkillState, step: int, state_path: Path, gate: object
+) -> None:
+    """Step 2: advisory only (vars already appended warning)."""
+    del state_path, gate
+    if step != 2:
+        return
+    # Advisory — never block progression.
+    state.custom.pop(_GATE_PASSED_KEY, None)
+    state.custom.pop(_GATE_NEXT_KEY, None)
+    state.custom.pop(_GATE_BODY_KEY, None)
+
+
+def run_repro_loop_gate(
+    *, state: SkillState, step: int, state_path: Path, gate: object
+) -> None:
+    del state_path, gate
+    if step != 3:
+        return
+    _apply_cached_soft_gate(state, step=step)
+
+
+def run_register_and_quartet_gate(
+    *, state: SkillState, step: int, state_path: Path, gate: object
+) -> None:
+    del state_path, gate
+    if step != 4:
+        return
+    _apply_cached_soft_gate(state, step=step)
+
+
+def run_step5_bundle_gate(
+    *, state: SkillState, step: int, state_path: Path, gate: object
+) -> None:
+    del state_path, gate
+    if step != 5:
+        return
+    _apply_cached_soft_gate(state, step=step)
+
+
+def run_step7_closure_gate(
+    *, state: SkillState, step: int, state_path: Path, gate: object
+) -> None:
+    del state_path, gate
+    if step != 7:
+        return
+    _apply_cached_soft_gate(state, step=step)

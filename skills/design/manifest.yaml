@@ -1,0 +1,145 @@
+manifest_version: 1
+skill: design
+max_step: 8
+handoff_skill: plan
+cli_flags:
+  - name: "--auto1"
+    type: bool
+    default: false
+    help: "Set autonomy to Level 1 (pause at every gate)"
+  - name: "--auto2"
+    type: bool
+    default: false
+    help: "Set autonomy to Level 2 (pause at approval only)"
+  - name: "--auto3"
+    type: bool
+    default: false
+    help: "Set autonomy to Level 3 (full auto, pause at final approval)"
+  - name: "--allow-spec-incomplete"
+    type: bool
+    default: false
+    help: "Bypass strict design-spec gate on step 8 when spec_required."
+  - name: "--spec-override-reason"
+    type: str
+    default: ""
+    help: "Recorded in handoff when using --allow-spec-incomplete."
+  - name: "--spec-override-requested-by"
+    type: str
+    default: ""
+    help: "Optional identifier for who requested the override."
+  - name: "--spec-override-follow-up"
+    type: str
+    default: ""
+    help: "Required tracked follow-up when using --allow-spec-incomplete."
+  - name: "--allow-issues-incomplete"
+    type: bool
+    default: false
+    help: "Bypass strict spec-issues gate on step 8 when spec_required."
+  - name: "--issues-override-reason"
+    type: str
+    default: ""
+    help: "Recorded in handoff when using --allow-issues-incomplete."
+  - name: "--issues-override-requested-by"
+    type: str
+    default: ""
+    help: "Optional identifier for who requested the override."
+  - name: "--issues-override-follow-up"
+    type: str
+    default: ""
+    help: "Required tracked follow-up when using --allow-issues-incomplete."
+steps:
+  - step: 1
+    phase: Startup
+    prompt: design/startup
+    variables_callable: "scripts.design.design_vars:build_variables"
+    todos:
+      - content: Detect autonomy level and check for resumable session
+        activeForm: Detecting autonomy and session state
+      - content: Initialize design state and memory directory
+        activeForm: Initializing state
+  - step: 2
+    phase: Scope & Team
+    prompt: design/scope
+    variables_callable: "scripts.design.design_vars:build_variables"
+    todos:
+      - content: Assess task scope and type (feature/bugfix/refactor)
+        activeForm: Assessing scope
+      - content: Compose agent team based on scope
+        activeForm: Composing team
+  - step: 3
+    phase: Investigation Dispatch
+    prompt: design/investigation
+    variables_callable: "scripts.design.design_vars:build_variables"
+    todos:
+      - content: Dispatch Architect for investigation lead
+        activeForm: Dispatching Architect
+      - content: Dispatch Investigator for evidence gathering
+        activeForm: Dispatching Investigator
+      - content: Wait for investigation artifacts
+        activeForm: Waiting for artifacts
+  - step: 4
+    phase: Investigation Review
+    prompt: design/investigation_review
+    variables_callable: "scripts.design.design_vars:build_variables"
+    todos:
+      - content: Run 4-step review loop on investigation
+        activeForm: Running investigation review loop
+      - content: Record findings and resolve blockers
+        activeForm: Recording findings
+  - step: 5
+    phase: Solution Dispatch
+    prompt: design/solution
+    variables_callable: "scripts.design.design_vars:build_variables"
+    todos:
+      - content: Dispatch Architect for solution generation
+        activeForm: Dispatching Architect for solutions
+      - content: Run brainstorming protocol (SCAMPER + Pugh Matrix)
+        activeForm: Running brainstorming
+  - step: 6
+    phase: Solution Review & Approval
+    prompt: design/approval
+    variables_callable: "scripts.design.design_vars:build_variables"
+    todos:
+      - content: Run review loop on proposed solutions
+        activeForm: Running solution review loop
+      - content: Run pre-mortem analysis on recommended solution
+        activeForm: Running pre-mortem
+      - content: Present solutions to user for approval
+        activeForm: Presenting solutions for approval
+  - step: 7
+    phase: Spec → Issues
+    prompt: design/spec_issues
+    variables_callable: "scripts.design.design_vars:build_variables"
+    todos:
+      - content: Decompose approved spec into plan-ready issues
+        activeForm: Splitting spec into issues
+      - content: Create beads issues when available and record sidecar
+        activeForm: Recording spec issues
+  - step: 8
+    phase: Handoff
+    prompt: design/handoff
+    variables_callable: "scripts.design.design_vars:build_variables"
+    todos:
+      - content: Write handoff file for next skill
+        activeForm: Writing handoff file
+      - content: Render dashboard and complete skill
+        activeForm: Rendering dashboard
+gates:
+  # Shape: JSON Schema (hard-fail). Step 6 prepares sidecar only — residual python
+  # still early-returns at step 6; schema runs on steps that already hard-fail.
+  - id: design_spec_shape
+    steps: [7, 8]
+    kind: schema
+    schema: schemas/sidecars/design/design-spec-gate.schema.json
+  - id: design_spec_gate
+    steps: [6, 7, 8]
+    kind: python
+    callable: "scripts.design.spec_gate:validate_spec_gate"
+  - id: design_spec_issues_shape
+    steps: [8]
+    kind: schema
+    schema: schemas/sidecars/design/design-spec-issues.schema.json
+  - id: design_spec_issues_gate
+    steps: [8]
+    kind: python
+    callable: "scripts.design.spec_issues:validate_spec_issues_gate"

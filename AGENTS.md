@@ -37,6 +37,15 @@ The `(stop)` option is always last. The state file persists, and workflows can r
 
 Orchestrator output for **step 1** of workflow skills includes a **SESSION OPT-IN** block: the agent should confirm whether the user wants structured Forge for the chat vs ad hoc help, **before** mirroring phase todos. Suppress the block in automation with **`FORGE_SKIP_SESSION_OPTIN=1`** (see README Advanced). Codex installs should run **`forge codex-agents`** so `developer_instructions` includes the same expectation.
 
+## Declarative skill engine
+
+Migrated workflow skills are driven by `skills/<skill>/manifest.yaml` and
+`scripts/shared/skill_runner.py` (`run_skill`). Phase names for those skills live
+in the manifest (not `skill_phases.py`). Kill-switch: `FORGE_SKILL_ENGINE=0` →
+legacy `*_legacy` / `orchestrate_legacy` bodies. **Diagnose** gates remain
+`kind: python` (register validators); there are no diagnose sidecar schemas in
+this release. Guide: [`docs/declarative-skills.md`](docs/declarative-skills.md).
+
 ## Graphify in skill steps
 
 **Graphify runs in the background:** session hooks, every `forge <skill> --step` (debounced), and `forge ship --step 1` spawn `forge graphify refresh` without blocking — continue work and read `GRAPH_REPORT.md` as-is. Ship prints the **GRAPHIFY** banner only. Suppress with **`FORGE_SKIP_GRAPHIFY=1`**. See `templates/graphify-contract.md` and `docs/graphify.md`.
@@ -195,6 +204,7 @@ Rules:
 - IF graphify-out/wiki/index.md EXISTS, navigate it instead of reading raw files
 - For cross-module "how does X relate to Y" questions, prefer `graphify query "<question>"`, `graphify path "<A>" "<B>"`, or `graphify explain "<concept>"` over grep — these traverse the graph's EXTRACTED + INFERRED edges instead of scanning files
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+- **Corpus hygiene:** Graphify ignores **`.graphifyignore` only** (not `.gitignore`). Keep `.forge/`, `.codex/`, `.pyscn/`, `.skylos/`, `.serena/`, venvs, `graphify-out/`, build artifacts, and similar runtime/analyzer dumps out of the graph. Extend `.graphifyignore` when new dump dirs appear; after edits, purge `graphify-out/cache` and `graphify update . --force`.
 
 ## Forge Studio (internal)
 

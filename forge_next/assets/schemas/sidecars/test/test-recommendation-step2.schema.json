@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge://schemas/sidecars/test/test-recommendation-step2.schema.json",
+  "title": "Test flows recommendation sidecar",
+  "description": "Shape of .test-recommendation-step2.json (flows mode step 2/3).",
+  "type": "object",
+  "required": ["chosen", "reasoning", "confidence"],
+  "properties": {
+    "chosen": {
+      "type": "string",
+      "enum": ["scenario", "bdd", "http-replay", "workflow-dryrun"]
+    },
+    "reasoning": {
+      "type": "string",
+      "minLength": 1
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "alternatives": {
+      "type": "array"
+    }
+  },
+  "additionalProperties": true
+}
