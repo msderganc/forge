@@ -12,99 +12,9 @@ from scripts.shared.skill_state import SkillState
 
 # Canonical phase names per skill (and optional variant, e.g. evaluate mode).
 # Keys: skill name -> variant (None for default) -> step -> display name
+# Migrated skills load phases from skills/<skill>/manifest.yaml via load_manifest.
 _SKILL_PHASE_NAMES: dict[str, dict[str | None, dict[int, str]]] = {
-    "design": {
-        None: {
-            1: "Startup",
-            2: "Scope & Team",
-            3: "Investigation Dispatch",
-            4: "Investigation Review",
-            5: "Solution Dispatch",
-            6: "Solution Review & Approval",
-            7: "Spec → Issues",
-            8: "Handoff",
-        },
-    },
-    "plan": {
-        None: {
-            1: "Context Detection",
-            2: "Architecture Dispatch",
-            3: "Plan Creation Dispatch",
-            4: "Plan Review Loop",
-            5: "User Approval",
-            6: "Documentation Planning",
-            7: "Handoff",
-        },
-    },
-    "implement": {
-        None: {
-            1: "Plan Detection",
-            2: "Branch Setup",
-            3: "Wave Dispatch",
-            4: "Wave Review",
-            5: "Wave Completion",
-            6: "Integration Verification",
-            7: "Documentation",
-            8: "Handoff",
-        },
-    },
-    "code-review": {
-        None: {
-            1: "Target Detection",
-            2: "Mode Selection",
-            3: "Team Dispatch",
-            4: "Deep Dive",
-            5: "Discussion",
-            6: "Report",
-        },
-    },
-    "test": {
-        "run": {
-            1: "Context Detection",
-            2: "Test Discovery",
-            3: "Test Execution",
-            4: "Failure Analysis",
-            5: "Coverage Gap Analysis",
-            6: "Report",
-        },
-        "flows": {
-            1: "Flow Context Detection",
-            2: "Flow-Type Recommendation",
-            3: "Scope Definition",
-            4: "Scaffolding",
-            5: "Mock Authoring",
-            6: "Execution + Iteration",
-            7: "Report + Handoff",
-        },
-    },
-    "diagnose": {
-        None: {
-            1: "Frame the Problem",
-            2: "Reproduce & Observe",
-            3: "Deepen (5 Whys)",
-            4: "Analyze & Rank",
-            5: "Solution Generation",
-            6: "Implement & Validate",
-            7: "Report & Prevention",
-        },
-    },
-    "sketch": {
-        None: {
-            1: "Startup",
-            2: "Sketch session",
-            3: "Handoff",
-        },
-    },
-    "ux-review": {
-        None: {
-            1: "Orient",
-            2: "Review plan",
-            3: "Browser walkthrough",
-            4: "States & viewports",
-            5: "Findings",
-            6: "Report + handoff",
-        },
-    },
+    # diagnose phases live in skills/diagnose/manifest.yaml (migrated Wave 6)
     "iterate": {
         None: {
             1: "Initialize",
@@ -116,49 +26,6 @@ _SKILL_PHASE_NAMES: dict[str, dict[str | None, dict[int, str]]] = {
             7: "Code review",
             8: "Test + metric",
             9: "Report",
-        },
-    },
-    "takeover": {
-        None: {
-            1: "Initialize + route",
-            2: "Upstream / continue",
-            3: "Plan + evaluate (pre)",
-            4: "Implement + evaluate (post)",
-            5: "Code review + test",
-            6: "Report",
-        },
-    },
-    "ship": {
-        None: {
-            1: "Graphify preflight (before commit)",
-        },
-    },
-    "evaluate": {
-        "pre": {
-            1: "Plan Parsing",
-            2: "Feasibility",
-            3: "Completeness",
-            4: "Codebase Alignment",
-            5: "Risk & Dependencies",
-            6: "Discussion",
-            7: "Report",
-        },
-        "post": {
-            1: "Plan Parsing",
-            2: "Completeness Audit",
-            3: "Correctness",
-            4: "Code Quality",
-            5: "Performance",
-            6: "Operational Readiness",
-            7: "Discussion",
-            8: "Report",
-        },
-        "review": {
-            1: "Team Dispatch",
-            2: "Findings Aggregation",
-            3: "Remediation",
-            4: "Discussion",
-            5: "Report",
         },
     },
 }
@@ -187,8 +54,15 @@ def agent_skill_token(skill_name: str) -> str:
 
 
 def phase_names_for(skill_name: str, variant: str | None = None) -> dict[int, str]:
-    """Return {step: display name} for a skill (and optional variant)."""
+    """Return {step: display name} for a skill (and optional variant).
+
+    Migrated skills: prefer ``load_manifest`` phase names. Unmigrated skills:
+    fall back to ``_SKILL_PHASE_NAMES``.
+    """
     skill = canonical_skill_name(skill_name)
+    from_manifest = _phase_names_from_manifest(skill, variant)
+    if from_manifest:
+        return from_manifest
     variants = _SKILL_PHASE_NAMES.get(skill, {})
     if variant is not None and variant in variants:
         return dict(variants[variant])
@@ -196,6 +70,28 @@ def phase_names_for(skill_name: str, variant: str | None = None) -> dict[int, st
         return dict(variants[None])
     if variants:
         return dict(next(iter(variants.values())))
+    return {}
+
+
+def _phase_names_from_manifest(
+    skill: str, variant: str | None
+) -> dict[int, str]:
+    """Load phase names from a skill manifest when available."""
+    try:
+        from scripts.shared.skill_manifest import SkillManifestError, load_manifest
+        from scripts.shared.orchestrator import _detect_repo_root
+    except ImportError:
+        return {}
+    try:
+        repo_root = _detect_repo_root(Path.cwd())
+        manifest = load_manifest(skill, repo_root)
+    except (SkillManifestError, OSError, ValueError):
+        return {}
+    if variant is not None and manifest.variants and variant in manifest.variants:
+        steps = manifest.variants[variant].steps
+        return {s.step: s.phase for s in steps}
+    if manifest.steps:
+        return {s.step: s.phase for s in manifest.steps}
     return {}
 
 

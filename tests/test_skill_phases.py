@@ -80,3 +80,31 @@ def test_parse_continuation_command_accepts_phase() -> None:
     assert step == 4
     assert state is not None
     assert state.endswith("sessions\\abc\\session.json") or state.endswith("sessions/abc/session.json")
+
+
+def test_phase_names_for_mixed_migrated_and_unmigrated() -> None:
+    """Migrated skills via manifest; iterate remains on the Python map."""
+    from scripts.shared.skill_phases import _SKILL_PHASE_NAMES, phase_names_for
+
+    assert "sketch" not in _SKILL_PHASE_NAMES
+    assert "plan" not in _SKILL_PHASE_NAMES
+    assert "design" not in _SKILL_PHASE_NAMES
+    assert "diagnose" not in _SKILL_PHASE_NAMES
+    sketch_phases = phase_names_for("sketch")
+    assert sketch_phases[1] == "Startup"
+    assert sketch_phases[2] == "Sketch session"
+    assert sketch_phases[3] == "Handoff"
+
+    plan_phases = phase_names_for("plan")
+    assert plan_phases[1] == "Context Detection"
+
+    design_phases = phase_names_for("design")
+    assert design_phases[1] == "Startup"
+
+    diagnose_phases = phase_names_for("diagnose")
+    assert diagnose_phases[1] == "Frame the Problem"
+
+    # Non-CLI iterate skill remains on the Python map
+    assert "iterate" in _SKILL_PHASE_NAMES
+    iterate_phases = phase_names_for("iterate")
+    assert iterate_phases[1] == "Initialize"

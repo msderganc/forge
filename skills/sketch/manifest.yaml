@@ -1,0 +1,40 @@
+manifest_version: 1
+skill: sketch
+max_step: 3
+cli_flags:
+  - name: "--with-domain-docs"
+    type: bool
+    default: false
+    help: "Allow inline CONTEXT.md glossary and sparse docs/adr/ updates"
+steps:
+  - step: 1
+    phase: Startup
+    prompt: sketch/startup
+    variables_callable: "scripts.sketch.sketch_vars:build_variables"
+    todos:
+      - content: Confirm topic, destination, and domain-docs mode
+        activeForm: Confirming sketch setup
+      - content: Initialize sketch-decisions.md (destination, fog, out-of-scope sections)
+        activeForm: Initializing sketch session
+  - step: 2
+    phase: Sketch session
+    prompt: sketch/session
+    await_same_step: true
+    variables_callable: "scripts.sketch.sketch_vars:build_variables"
+    todos:
+      - content: Run conversation loop (reflect, confirm, ask)
+        activeForm: Running sketch dialogue
+      - content: "Synthesis checkpoint: destination + locked vs fog vs out-of-scope"
+        activeForm: Synthesizing with user
+      - content: Update sketch-decisions.md (name section on loop-back)
+        activeForm: Recording decisions
+  - step: 3
+    phase: Handoff
+    prompt: sketch/handoff
+    variables_callable: "scripts.sketch.sketch_vars:build_variables"
+    todos:
+      - content: Write handoff-sketch.md for design
+        activeForm: Writing sketch handoff
+      - content: Present handoff menu (default design)
+        activeForm: Completing sketch handoff
+gates: []

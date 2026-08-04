@@ -1,0 +1,79 @@
+manifest_version: 1
+skill: takeover
+max_step: 6
+pre_run: "scripts.takeover.takeover_cli:pre_run"
+cli_flags:
+  - name: "--issue"
+    type: str
+    default: null
+    help: "GitHub issue number or URL"
+  - name: "--design"
+    type: str
+    default: null
+    help: "Path to design spec"
+  - name: "--goal"
+    type: str
+    default: null
+    help: "Override default ship-ready goal"
+  - name: "--cleanup"
+    type: bool
+    default: false
+    help: "Legacy state file cleanup (dry-run)"
+  - name: "--force"
+    type: bool
+    default: false
+    help: "With --cleanup: delete files"
+  - name: "--all-stale"
+    type: bool
+    default: false
+    help: "Cleanup all state files"
+steps:
+  - step: 1
+    phase: Initialize + route
+    prompt: takeover/body
+    variables_callable: "scripts.takeover.takeover_vars:build_variables"
+    todos:
+      - content: Infer epic and write route plan
+        activeForm: Routing
+      - content: Initialize takeover gate directory
+        activeForm: Initializing gates
+  - step: 2
+    phase: Upstream / continue
+    prompt: takeover/body
+    variables_callable: "scripts.takeover.takeover_vars:build_variables"
+    todos:
+      - content: Continue active session or complete upstream skills
+        activeForm: Driving upstream
+  - step: 3
+    phase: Plan + evaluate (pre)
+    prompt: takeover/body
+    variables_callable: "scripts.takeover.takeover_vars:build_variables"
+    todos:
+      - content: Drive plan and evaluate (pre) until gates pass
+        activeForm: Awaiting plan/eval gates
+  - step: 4
+    phase: Implement + evaluate (post)
+    prompt: takeover/body
+    variables_callable: "scripts.takeover.takeover_vars:build_variables"
+    todos:
+      - content: Drive implement and evaluate (post) until gates pass
+        activeForm: Awaiting implement/eval gates
+  - step: 5
+    phase: Code review + test
+    prompt: takeover/body
+    variables_callable: "scripts.takeover.takeover_vars:build_variables"
+    todos:
+      - content: Drive code-review and test until ship-ready
+        activeForm: Awaiting review/test gates
+  - step: 6
+    phase: Report
+    prompt: takeover/body
+    variables_callable: "scripts.takeover.takeover_vars:build_variables"
+    todos:
+      - content: Write deviations summary and hand off to ship
+        activeForm: Writing takeover report
+gates:
+  - id: takeover_gate_waits
+    steps: [2, 3, 4, 5, 6]
+    kind: python
+    callable: "scripts.takeover.takeover_gates:run_takeover_gate_step"

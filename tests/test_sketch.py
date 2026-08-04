@@ -52,7 +52,7 @@ def test_sketch_step1_outputs_startup(tmp_path, monkeypatch):
 
 def test_sketch_paths_use_repo_relative_memory_dir(tmp_path, monkeypatch):
     from scripts.shared import repo_paths as rp
-    from scripts.sketch import sketch as sketch_mod
+    from scripts.sketch import sketch_vars as sketch_vars_mod
 
     (tmp_path / ".git").mkdir()
     (tmp_path / ".codex").mkdir()
@@ -70,7 +70,7 @@ def test_sketch_paths_use_repo_relative_memory_dir(tmp_path, monkeypatch):
     from scripts.shared.orchestrator import SkillState
 
     state = SkillState(skill_name="sketch", max_step=3)
-    vars_ = sketch_mod._build_variables(state, tmp_path)
+    vars_ = sketch_vars_mod.build_variables(state, tmp_path)
     assert vars_["SKETCH_DECISIONS_PATH"] == ".forge/memory/sketch-decisions.md"
     assert vars_["SKETCH_DECISIONS_REL"] == ".forge/memory/sketch-decisions.md"
     assert ".codex/forge/memory" not in vars_["SKETCH_NO_EDIT_POLICY"]

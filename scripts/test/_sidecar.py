@@ -3,6 +3,9 @@
 Mirrors evaluate's findings-sidecar pattern but with a different schema (single
 object, not array) so the function is parallel — not a reuse of
 _ingest_findings_sidecars.
+
+Shape validation for ``.test-recommendation-step2.json`` goes through
+``schema_gate`` (Wave 5); this module still owns exist/parse/delete lifecycle.
 """
 
 from __future__ import annotations
@@ -11,7 +14,12 @@ import json
 import sys
 from pathlib import Path
 
+from scripts.shared.schema_gate import validate_sidecar_file
+
 VALID_FLOW_TYPES = {"scenario", "bdd", "http-replay", "workflow-dryrun"}
+RECOMMENDATION_SCHEMA = (
+    "schemas/sidecars/test/test-recommendation-step2.schema.json"
+)
 
 
 def recommendation_sidecar_path(state_dir: Path) -> Path:
@@ -47,10 +55,7 @@ def ingest_recommendation_sidecar(state_dir: Path) -> dict:
 
     Validation:
     - File exists (else: sys.exit(1) with stderr message naming the file)
-    - JSON parses (else: sys.exit(1) with stderr message + parse error)
-    - "chosen" present and in VALID_FLOW_TYPES (else: sys.exit(1))
-    - "reasoning" present and non-empty (else: sys.exit(1))
-    - "confidence" present and 0.0..1.0 (else: sys.exit(1))
+    - Shape via schema_gate (chosen / reasoning / confidence)
 
     NEVER falls back to a default. On any validation failure, exits with a
     clear stderr message naming the file + the specific issue.
@@ -66,62 +71,35 @@ def ingest_recommendation_sidecar(state_dir: Path) -> dict:
     """
     path = recommendation_sidecar_path(state_dir)
 
-    # Check file exists
     if not path.exists():
         print(f"ERROR: recommendation sidecar not found: {path}", file=sys.stderr)
         sys.exit(1)
 
-    # Parse JSON
+    ok, msg = validate_sidecar_file(
+        path,
+        RECOMMENDATION_SCHEMA,
+        require_file=True,
+    )
+    if not ok:
+        print(f"ERROR: {msg}", file=sys.stderr)
+        sys.exit(1)
+
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as e:
-        print(f"ERROR: failed to parse recommendation sidecar {path}: {e}", file=sys.stderr)
-        sys.exit(1)
-    except OSError as e:
-        print(f"ERROR: failed to read recommendation sidecar {path}: {e}", file=sys.stderr)
-        sys.exit(1)
-
-    # Validate chosen
-    if "chosen" not in data:
-        print(f"ERROR: recommendation sidecar {path} missing 'chosen' field", file=sys.stderr)
-        sys.exit(1)
-
-    chosen = data.get("chosen")
-    if chosen not in VALID_FLOW_TYPES:
+    except (json.JSONDecodeError, OSError) as e:
         print(
-            f"ERROR: recommendation sidecar {path} has invalid 'chosen' value: {chosen!r} "
-            f"(must be one of {sorted(VALID_FLOW_TYPES)})",
+            f"ERROR: failed to read recommendation sidecar {path}: {e}",
             file=sys.stderr,
         )
         sys.exit(1)
 
-    # Validate reasoning
-    if "reasoning" not in data:
-        print(f"ERROR: recommendation sidecar {path} missing 'reasoning' field", file=sys.stderr)
-        sys.exit(1)
-
-    reasoning = data.get("reasoning")
-    if not reasoning or not str(reasoning).strip():
-        print(f"ERROR: recommendation sidecar {path} has empty 'reasoning' field", file=sys.stderr)
-        sys.exit(1)
-
-    # Validate confidence
-    if "confidence" not in data:
-        print(f"ERROR: recommendation sidecar {path} missing 'confidence' field", file=sys.stderr)
-        sys.exit(1)
-
-    try:
-        confidence = float(data.get("confidence"))
-        if not (0.0 <= confidence <= 1.0):
-            raise ValueError(f"{confidence} out of range [0.0, 1.0]")
-    except (TypeError, ValueError) as e:
+    if not isinstance(data, dict):
         print(
-            f"ERROR: recommendation sidecar {path} has invalid 'confidence' value: {e}",
+            f"ERROR: recommendation sidecar {path} must be a JSON object",
             file=sys.stderr,
         )
         sys.exit(1)
 
-    # Success: delete the file and return
     try:
         path.unlink()
     except OSError:

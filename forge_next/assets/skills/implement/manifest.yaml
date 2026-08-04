@@ -1,0 +1,112 @@
+manifest_version: 1
+skill: implement
+max_step: 8
+handoff_skill: code-review
+cli_flags:
+  - name: "--plan"
+    type: str
+    default: null
+    help: "Path to plan file (step 1 only; auto-detected from handoff if omitted)"
+  - name: "--branch-prefix"
+    type: str
+    default: null
+    choices: ["feat", "fix", "chore", "refactor", "docs", "hotfix"]
+    help: "Git branch prefix for feature/task branches (default: feat)."
+  - name: "--allow-docs-incomplete"
+    type: bool
+    default: false
+    help: "Bypass strict documentation completion gate on step 8."
+  - name: "--docs-override-reason"
+    type: str
+    default: ""
+    help: "Required when using --allow-docs-incomplete."
+  - name: "--docs-override-requested-by"
+    type: str
+    default: ""
+    help: "Optional identifier for who requested the override."
+  - name: "--docs-override-follow-up"
+    type: str
+    default: ""
+    help: "Required with --allow-docs-incomplete: tracked follow-up item."
+  - name: "--defer-graphify-waves"
+    type: bool
+    default: false
+    help: "Defer GRAPHIFY banners during implement wave steps 3–5."
+steps:
+  - step: 1
+    phase: Plan Detection
+    prompt: implement/plan_detect
+    variables_callable: "scripts.implement.implement_vars:build_variables"
+    todos:
+      - content: Detect plan path from handoff or CLI
+        activeForm: Detecting plan path
+      - content: Initialize implement state
+        activeForm: Initializing state
+  - step: 2
+    phase: Branch Setup
+    prompt: implement/branch_setup
+    variables_callable: "scripts.implement.implement_vars:build_variables"
+    todos:
+      - content: Create feature branch
+        activeForm: Creating feature branch
+      - content: Identify waves from parallelization map
+        activeForm: Identifying waves
+  - step: 3
+    phase: Wave Dispatch
+    prompt: implement/wave_dispatch
+    variables_callable: "scripts.implement.implement_vars:build_variables"
+    todos:
+      - content: Dispatch developer agents for current wave
+        activeForm: Dispatching wave agents
+      - content: Wait for wave task completion
+        activeForm: Waiting for wave completion
+  - step: 4
+    phase: Wave Review
+    prompt: implement/wave_review
+    variables_callable: "scripts.implement.implement_vars:build_variables"
+    todos:
+      - content: Run per-task review loops (QA + Critic + Security)
+        activeForm: Running per-task reviews
+      - content: Resolve findings from reviews
+        activeForm: Resolving findings
+  - step: 5
+    phase: Wave Completion
+    prompt: implement/wave_complete
+    variables_callable: "scripts.implement.implement_vars:build_variables"
+    todos:
+      - content: Merge wave branches to feature branch
+        activeForm: Merging wave
+      - content: Check for next wave or proceed to integration verification
+        activeForm: Checking wave status
+  - step: 6
+    phase: Integration Verification
+    prompt: implement/integration_check
+    variables_callable: "scripts.implement.implement_vars:build_variables"
+    todos:
+      - content: Verify cross-wave integration (dependencies, interfaces, architecture)
+        activeForm: Verifying cross-wave integration
+      - content: Run regression sweep and performance check
+        activeForm: Running regression sweep
+  - step: 7
+    phase: Documentation
+    prompt: implement/documentation
+    variables_callable: "scripts.implement.implement_vars:build_variables"
+    todos:
+      - content: Dispatch doc-writer for documentation
+        activeForm: Dispatching doc-writer
+      - content: Create or update ADRs for significant decisions
+        activeForm: Updating ADRs
+  - step: 8
+    phase: Handoff
+    prompt: implement/handoff
+    variables_callable: "scripts.implement.implement_vars:build_variables"
+    todos:
+      - content: Write handoff file for code-review
+        activeForm: Writing handoff
+      - content: Render dashboard and complete
+        activeForm: Rendering dashboard
+gates:
+  - id: docs_gate
+    steps: [8]
+    kind: python
+    callable: "scripts.implement.docs_gate_escape:exit_if_documentation_gate_fails"

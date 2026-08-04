@@ -1,0 +1,90 @@
+manifest_version: 1
+skill: plan
+max_step: 7
+cli_flags:
+  - name: "--force"
+    type: bool
+    default: false
+    help: "Overwrite an existing plan file at step 1 even if it contains content."
+  - name: "--mode"
+    type: str
+    default: null
+    choices: ["default", "lite"]
+    help: "Plan mode: default (full governance) or lite (concise, same task rigor)."
+  - name: "--save-mode-preference"
+    type: bool
+    default: false
+    help: "When used with --mode, persist that mode as the default for future plan sessions."
+steps:
+  - step: 1
+    phase: Context Detection
+    prompt: plan/context
+    variables_callable: "scripts.plan.plan_vars:build_variables"
+    todos:
+      - content: Read handoff-design.md and memory files
+        activeForm: Reading handoff and memory
+      - content: Initialize plan state
+        activeForm: Initializing state
+  - step: 2
+    phase: Architecture Dispatch
+    prompt: plan/architecture
+    variables_callable: "scripts.plan.plan_vars:build_variables"
+    todos:
+      - content: Dispatch Architect for architecture design
+        activeForm: Dispatching Architect
+      - content: Wait for architecture artifacts
+        activeForm: Waiting for architecture
+  - step: 3
+    phase: Plan Creation Dispatch
+    prompt: plan/creation
+    variables_callable: "scripts.plan.plan_vars:build_variables"
+    todos:
+      - content: Dispatch Planner with INVEST validation
+        activeForm: Dispatching Planner
+      - content: Validate each task against INVEST criteria
+        activeForm: Validating INVEST
+  - step: 4
+    phase: Plan Review Loop
+    prompt: plan/review_loop
+    variables_callable: "scripts.plan.plan_vars:build_variables"
+    todos:
+      - content: Run 4-step review loop on plan
+        activeForm: Running plan review loop
+      - content: Record and resolve findings
+        activeForm: Resolving findings
+  - step: 5
+    phase: User Approval
+    prompt: plan/approval
+    variables_callable: "scripts.plan.plan_vars:build_variables"
+    todos:
+      - content: Run pre-mortem analysis on plan
+        activeForm: Running pre-mortem
+      - content: Present plan to user for approval
+        activeForm: Presenting plan for approval
+  - step: 6
+    phase: Documentation Planning
+    prompt: plan/documentation
+    variables_callable: "scripts.plan.plan_vars:build_variables"
+    todos:
+      - content: Define documentation scope and audience applicability
+        activeForm: Planning documentation
+      - content: Confirm external wiki and repo doc targets
+        activeForm: Confirming doc targets
+  - step: 7
+    phase: Handoff
+    prompt: plan/handoff
+    variables_callable: "scripts.plan.plan_vars:build_variables"
+    todos:
+      - content: Write handoff file for implement skill
+        activeForm: Writing handoff
+      - content: Render dashboard and complete
+        activeForm: Rendering dashboard
+gates:
+  - id: architecture_probes
+    steps: [2]
+    kind: python
+    callable: "scripts.plan.plan_vars:maybe_inject_architecture_probes"
+  - id: plan_skeleton
+    steps: [7]
+    kind: python
+    callable: "scripts.plan.plan_vars:exit_if_plan_skeleton_incomplete"

@@ -1,0 +1,24 @@
+manifest_version: 1
+skill: sketch
+max_step: 3
+pre_run: null
+cli_flags:
+  - name: "--with-domain-docs"
+    type: bool
+    default: false
+    help: "Allow CONTEXT.md glossary and sparse docs/adr/"
+steps:
+  - step: 1
+    phase: Startup
+    prompt: sketch/startup
+    todos:
+      - id: "1"
+        content: Confirm session opt-in
+  - step: 2
+    phase: Session
+    prompt: sketch/session
+    variables_callable: "scripts.sketch.sketch_vars:build_variables"
+  - step: 3
+    phase: Handoff
+    prompt: sketch/handoff
+gates: []

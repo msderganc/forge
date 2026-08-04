@@ -1,0 +1,111 @@
+manifest_version: 1
+skill: diagnose
+max_step: 7
+cli_flags:
+  - name: "--mode"
+    type: str
+    default: null
+    choices: ["guided", "autonomous", "interactive"]
+    help: "Autonomy mode (default: guided)"
+steps:
+  - step: 1
+    phase: Frame the Problem
+    prompt: diagnose/define
+    variables_callable: "scripts.diagnose.diagnose_vars:build_variables"
+    todos:
+      - content: Pick ONE entry framing technique (KT, Cynefin, first-principles, evidence, or MECE sketch)
+        activeForm: Choosing entry framing
+      - content: Write problem_statement + .diagnose-problem-spec.json (framing_entry, routing)
+        activeForm: Writing problem spec
+      - content: List activated_techniques (always includes 5 Whys; add others only when needed)
+        activeForm: Routing follow-on techniques
+  - step: 2
+    phase: Reproduce & Observe
+    prompt: diagnose/evidence
+    variables_callable: "scripts.diagnose.diagnose_vars:build_variables"
+    todos:
+      - content: Build feedback loop — write .diagnose-feedback-loop.json (loop_type, command_or_path)
+        activeForm: Building feedback loop
+      - content: Run loop; capture symptom; confirm matches_user_report
+        activeForm: Running feedback loop
+      - content: Document minimal_repro_steps and artifact paths
+        activeForm: Documenting minimal repro
+      - content: Gather remaining evidence (logs, metrics, git hotspots, tests)
+        activeForm: Gathering evidence
+  - step: 3
+    phase: Deepen (5 Whys)
+    prompt: diagnose/decompose
+    variables_callable: "scripts.diagnose.diagnose_vars:build_variables"
+    todos:
+      - content: Draft 5 Whys chains in .diagnose-five-whys.json (primary deepen step)
+        activeForm: Drafting 5 Whys chains
+      - content: Activate MECE / hypothesis register only if routing_preferred requires them
+        activeForm: Optional MECE or hypotheses
+      - content: Update technique coverage rows for activated techniques only
+        activeForm: Updating coverage rows
+  - step: 4
+    phase: Analyze & Rank
+    prompt: diagnose/analyze
+    variables_callable: "scripts.diagnose.diagnose_vars:build_variables"
+    todos:
+      - content: "If hypothesis register active: eliminate all candidates via falsification"
+        activeForm: Eliminating hypotheses
+      - content: Finalize 5 Whys to root_cause + but_for; persist sidecars
+        activeForm: Finalizing 5 Whys
+      - content: Run FMEA scoring on full candidate list
+        activeForm: Running FMEA scoring
+      - content: Apply counterfactual validation on plausible hypotheses
+        activeForm: Running counterfactual validation
+      - content: Confirm root cause with evidence; persist register
+        activeForm: Confirming root cause
+  - step: 5
+    phase: Solution Generation
+    prompt: diagnose/solutions
+    variables_callable: "scripts.diagnose.diagnose_vars:build_variables"
+    todos:
+      - content: Generate solutions only for confirmed root causes
+        activeForm: Generating solutions
+      - content: Run pre-mortem on each proposed fix
+        activeForm: Running pre-mortem
+  - step: 6
+    phase: Implement & Validate
+    prompt: diagnose/quick_fix
+    variables_callable: "scripts.diagnose.diagnose_vars:build_variables"
+    todos:
+      - content: Apply fix (if simple complexity)
+        activeForm: Applying fix
+      - content: Validate fix addresses root cause
+        activeForm: Validating fix
+  - step: 7
+    phase: Report & Prevention
+    prompt: diagnose/report
+    variables_callable: "scripts.diagnose.diagnose_vars:build_variables"
+    todos:
+      - content: Finalize coverage matrix for activated techniques (not all 20 by default)
+        activeForm: Technique matrix
+      - content: Write diagnostic report with prevention measures
+        activeForm: Writing diagnostic report
+      - content: Write handoff and render dashboard
+        activeForm: Writing handoff
+# All diagnose gates remain kind: python (no schema migration this release).
+gates:
+  - id: diagnose_problem_spec_advisory
+    steps: [2]
+    kind: python
+    callable: "scripts.diagnose.diagnose_gates:run_problem_spec_advisory_gate"
+  - id: diagnose_repro_loop
+    steps: [3]
+    kind: python
+    callable: "scripts.diagnose.diagnose_gates:run_repro_loop_gate"
+  - id: diagnose_register_and_quartet
+    steps: [4]
+    kind: python
+    callable: "scripts.diagnose.diagnose_gates:run_register_and_quartet_gate"
+  - id: diagnose_step5_bundle
+    steps: [5]
+    kind: python
+    callable: "scripts.diagnose.diagnose_gates:run_step5_bundle_gate"
+  - id: diagnose_step7_closure
+    steps: [7]
+    kind: python
+    callable: "scripts.diagnose.diagnose_gates:run_step7_closure_gate"

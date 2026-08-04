@@ -1,0 +1,157 @@
+manifest_version: 1
+skill: test
+pre_run: "scripts.test.test_cli:reject_ux_mode"
+cli_flags:
+  - name: "--target"
+    type: list
+    default: null
+    help: "Test command, path, or pattern to run"
+  - name: "--mode"
+    type: str
+    default: null
+    choices: ["run", "flows", "ux"]
+    help: "Skill mode: run (default) or flows (author mock flows). 'ux' redirects to forge ux-review"
+  - name: "--flow-type"
+    type: str
+    default: null
+    choices: ["scenario", "bdd", "http-replay", "workflow-dryrun"]
+    help: "Override flow type recommendation"
+  - name: "--re-record"
+    type: bool
+    default: false
+    help: "Refresh HTTP-replay cassettes (flows mode only)"
+  - name: "--framework"
+    type: str
+    default: null
+    help: "Manual override for test framework detection"
+  - name: "--entry-point"
+    type: str
+    default: null
+    choices: ["ui", "http", "cli", "module", "none"]
+    help: "Manual override for test entry point"
+  - name: "--no-db"
+    type: bool
+    default: false
+    help: "Override test-DB detection as 'none'"
+  - name: "--roles"
+    type: str
+    default: null
+    help: "Comma-separated role list override (e.g., 'admin,member,viewer')"
+steps: []
+variants:
+  run:
+    max_step: 6
+    steps:
+      - step: 1
+        phase: Context Detection
+        prompt: test/context
+        variables_callable: "scripts.test.test_vars:build_variables"
+        todos:
+          - content: Read handoff-code-review.md and handoff-implement.md
+            activeForm: Reading handoffs
+          - content: Initialize test state
+            activeForm: Initializing state
+      - step: 2
+        phase: Test Discovery
+        prompt: test/discovery
+        variables_callable: "scripts.test.test_vars:build_variables"
+        todos:
+          - content: Dispatch QA Reviewer to discover test suites
+            activeForm: Discovering test suites
+          - content: Identify coverage targets
+            activeForm: Identifying coverage targets
+      - step: 3
+        phase: Test Execution
+        prompt: test/execution
+        variables_callable: "scripts.test.test_vars:build_variables"
+        todos:
+          - content: Run test suites via verification ladder
+            activeForm: Running test suites
+          - content: Collect results and coverage data
+            activeForm: Collecting results
+      - step: 4
+        phase: Failure Analysis
+        prompt: test/failure_analysis
+        variables_callable: "scripts.test.test_vars:build_variables"
+        todos:
+          - content: Dispatch Investigator for failure root-cause analysis
+            activeForm: Investigating failures
+      - step: 5
+        phase: Coverage Gap Analysis
+        prompt: test/coverage_gaps
+        variables_callable: "scripts.test.test_vars:build_variables"
+        todos:
+          - content: Dispatch QA + Critic for coverage gap analysis
+            activeForm: Analyzing coverage gaps
+          - content: Run mutation audit on critical paths
+            activeForm: Running mutation audit
+      - step: 6
+        phase: Report
+        prompt: test/report
+        variables_callable: "scripts.test.test_vars:build_variables"
+        todos:
+          - content: Write test report
+            activeForm: Writing test report
+          - content: Write handoff and render dashboard
+            activeForm: Writing handoff
+  flows:
+    max_step: 7
+    gates:
+      - id: recommendation_shape
+        steps: [3]
+        kind: schema
+        schema: schemas/sidecars/test/test-recommendation-step2.schema.json
+      - id: recommendation_ingest
+        steps: [3]
+        kind: python
+        callable: "scripts.test.test_vars:ingest_recommendation_gate"
+    steps:
+      - step: 1
+        phase: Flow Context Detection
+        prompt: test/flow_context
+        variables_callable: "scripts.test.test_vars:build_variables"
+        todos:
+          - content: Detect framework, entry point, and roles for flows
+            activeForm: Detecting flow context
+      - step: 2
+        phase: Flow-Type Recommendation
+        prompt: test/flow_recommendation
+        variables_callable: "scripts.test.test_vars:build_variables"
+        todos:
+          - content: Recommend flow type (scenario/bdd/http-replay/workflow-dryrun)
+            activeForm: Recommending flow type
+      - step: 3
+        phase: Scope Definition
+        prompt: test/flow_scope
+        variables_callable: "scripts.test.test_vars:build_variables"
+        todos:
+          - content: Define flow scope and ingest recommendation sidecar
+            activeForm: Defining flow scope
+      - step: 4
+        phase: Scaffolding
+        prompt: test/flow_scaffold
+        variables_callable: "scripts.test.test_vars:build_variables"
+        todos:
+          - content: Scaffold flow files
+            activeForm: Scaffolding flows
+      - step: 5
+        phase: Mock Authoring
+        prompt: test/flow_author
+        variables_callable: "scripts.test.test_vars:build_variables"
+        todos:
+          - content: Author mock flow bodies
+            activeForm: Authoring mocks
+      - step: 6
+        phase: Execution + Iteration
+        prompt: test/flow_execute
+        variables_callable: "scripts.test.test_vars:build_variables"
+        todos:
+          - content: Execute flows and iterate
+            activeForm: Executing flows
+      - step: 7
+        phase: Report + Handoff
+        prompt: test/flow_report
+        variables_callable: "scripts.test.test_vars:build_variables"
+        todos:
+          - content: Write flow report and handoff
+            activeForm: Writing flow report

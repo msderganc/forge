@@ -1,0 +1,5 @@
+manifest_version: 1
+skill: sketch
+max_step: 3
+# Intentionally omit steps — loader must raise SkillManifestError mentioning steps
+gates: []

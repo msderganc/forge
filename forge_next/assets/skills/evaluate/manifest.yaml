@@ -1,0 +1,203 @@
+manifest_version: 1
+skill: evaluate
+pre_run: "scripts.evaluate.evaluate_cli:pre_run"
+cli_flags:
+  - name: "--plan"
+    type: str
+    default: null
+    help: "Plan file path or keywords (step 1 only, pre/post modes)"
+  - name: "--mode"
+    type: str
+    default: null
+    choices: ["pre", "post", "review"]
+    help: "Force evaluation mode (pre or post)"
+  - name: "--team"
+    type: bool
+    default: false
+    help: "Enable team dispatch in pre/post modes"
+  - name: "--effort"
+    type: str
+    default: null
+    choices: ["small", "medium", "large", "lite", "light", "standard", "thorough"]
+    help: "Override size/ceremony tier (small skips heavy phases)."
+steps: []
+variants:
+  pre:
+    max_step: 7
+    gates:
+      # Soft schema: missing/invalid → warn only (preserves ingest warn-and-skip).
+      - id: findings_shape
+        steps: [2, 3, 4, 5, 6, 7]
+        kind: schema
+        schema: schemas/sidecars/evaluate/evaluate-findings-step.schema.json
+      - id: findings_ingest
+        steps: [2, 3, 4, 5, 6, 7]
+        kind: python
+        callable: "scripts.evaluate.evaluate_vars:ingest_findings_gate"
+    steps:
+      - step: 1
+        phase: Plan Parsing
+        prompt: shared/plan_parsing
+        variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
+        todos:
+          - content: Parse plan and extract file references
+            activeForm: Parsing plan
+          - content: Detect pre vs post implementation mode
+            activeForm: Detecting mode
+      - step: 2
+        phase: Feasibility
+        prompt: pre/feasibility
+        variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
+        todos:
+          - content: Assess feasibility of each plan step
+            activeForm: Assessing feasibility
+      - step: 3
+        phase: Completeness
+        prompt: pre/completeness
+        variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
+        todos:
+          - content: Check plan completeness (error handling, edge cases, tests)
+            activeForm: Checking completeness
+      - step: 4
+        phase: Codebase Alignment
+        prompt: pre/codebase_alignment
+        variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
+        todos:
+          - content: Check plan against existing code patterns and conventions
+            activeForm: Checking codebase alignment
+      - step: 5
+        phase: Risk & Dependencies
+        prompt: pre/risk_dependencies
+        variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
+        todos:
+          - content: Analyze dependencies, risks, rollback strategies, and failure modes
+            activeForm: Analyzing risks and dependencies
+      - step: 6
+        phase: Discussion
+        prompt: shared/discussion
+        variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
+        todos:
+          - content: Present findings to user for triage
+            activeForm: Running triage with user
+      - step: 7
+        phase: Report
+        prompt: report
+        variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
+        todos:
+          - content: Write evaluation report alongside plan
+            activeForm: Writing report
+  post:
+    max_step: 8
+    gates:
+      - id: findings_shape
+        steps: [2, 3, 4, 5, 6, 7, 8]
+        kind: schema
+        schema: schemas/sidecars/evaluate/evaluate-findings-step.schema.json
+      - id: findings_ingest
+        steps: [2, 3, 4, 5, 6, 7, 8]
+        kind: python
+        callable: "scripts.evaluate.evaluate_vars:ingest_findings_gate"
+    steps:
+      - step: 1
+        phase: Plan Parsing
+        prompt: shared/plan_parsing
+        variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
+        todos:
+          - content: Parse plan and extract file references
+            activeForm: Parsing plan
+      - step: 2
+        phase: Completeness Audit
+        prompt: post/completeness_audit
+        variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
+        todos:
+          - content: Audit completeness (what was implemented vs planned)
+            activeForm: Auditing completeness
+      - step: 3
+        phase: Correctness
+        prompt: post/correctness
+        variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
+        todos:
+          - content: Verify correctness of implementation
+            activeForm: Verifying correctness
+      - step: 4
+        phase: Code Quality
+        prompt: post/code_quality
+        variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
+        todos:
+          - content: Assess code quality
+            activeForm: Assessing code quality
+      - step: 5
+        phase: Performance
+        prompt: post/performance
+        variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
+        todos:
+          - content: Assess performance implications
+            activeForm: Assessing performance
+      - step: 6
+        phase: Operational Readiness
+        prompt: post/operational_readiness
+        variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
+        todos:
+          - content: Assess operational readiness
+            activeForm: Assessing operational readiness
+      - step: 7
+        phase: Discussion
+        prompt: shared/discussion
+        variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
+        todos:
+          - content: Present findings to user for triage
+            activeForm: Running triage with user
+      - step: 8
+        phase: Report
+        prompt: report
+        variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
+        todos:
+          - content: Write evaluation report alongside plan
+            activeForm: Writing report
+  review:
+    max_step: 5
+    gates:
+      - id: findings_shape
+        steps: [2, 3, 4, 5]
+        kind: schema
+        schema: schemas/sidecars/evaluate/evaluate-findings-step.schema.json
+      - id: findings_ingest
+        steps: [2, 3, 4, 5]
+        kind: python
+        callable: "scripts.evaluate.evaluate_vars:ingest_findings_gate"
+    steps:
+      - step: 1
+        phase: Team Dispatch
+        prompt: review/team_dispatch
+        variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
+        todos:
+          - content: Dispatch full review team in parallel
+            activeForm: Dispatching review team
+      - step: 2
+        phase: Findings Aggregation
+        prompt: review/findings_aggregation
+        variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
+        todos:
+          - content: Aggregate findings from all reviewers
+            activeForm: Aggregating findings
+      - step: 3
+        phase: Remediation
+        prompt: review/remediation
+        variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
+        todos:
+          - content: Run remediation review loop
+            activeForm: Running remediation
+      - step: 4
+        phase: Discussion
+        prompt: shared/discussion
+        variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
+        todos:
+          - content: Present findings to user for triage
+            activeForm: Running triage with user
+      - step: 5
+        phase: Report
+        prompt: report
+        variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
+        todos:
+          - content: Write review report
+            activeForm: Writing review report

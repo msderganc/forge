@@ -24,6 +24,8 @@ _WORKFLOW_MODULES = {
     "diagnose": "scripts.diagnose.orchestrate",
     "takeover": "scripts.takeover.takeover",
     "ship": "scripts.ship.ship",
+    # Kill-switch FORGE_SKILL_ENGINE=0 is honored inside the skill shim
+    # (scripts.sketch.sketch → sketch_legacy). Dispatch always targets the shim.
     "sketch": "scripts.sketch.sketch",
 }
 

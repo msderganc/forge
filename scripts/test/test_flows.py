@@ -81,9 +81,9 @@ def initialize_flow_custom(state: SkillState, args) -> None:
 
 
 def _build_variables(state: SkillState, state_path: Path | None = None, *, prompts_style: str = "brief"):
-    from scripts.test.test import _build_variables
+    from scripts.test.test_legacy import _build_variables as _legacy_build
 
-    return _build_variables(state, state_path, prompts_style=prompts_style)
+    return _legacy_build(state, state_path, prompts_style=prompts_style)
 
 
 def _next_command(

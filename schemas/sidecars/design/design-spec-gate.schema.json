@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forge://schemas/sidecars/design/design-spec-gate.schema.json",
+  "title": "Design spec gate sidecar",
+  "description": "Shape of .design-spec-gate.json (legacy .develop-spec-gate.json). Residual python still asserts on-disk spec_path and true booleans.",
+  "type": "object",
+  "required": ["spec_path", "spec_written", "self_review_passed", "user_approved"],
+  "properties": {
+    "spec_path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "spec_written": {
+      "type": "boolean"
+    },
+    "self_review_passed": {
+      "type": "boolean"
+    },
+    "user_approved": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": true
+}

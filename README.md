@@ -500,8 +500,9 @@ Outside Codex chat, hooks and automation call `forge <subcommand>` with a space 
 | **`FORGE_SKIP_AUTO_CLOSE=1`** | Disable step-1 auto-close of superseded sessions |
 | **`FORGE_SKIP_SUBAGENT_LIFECYCLE=1`** | Disable Cursor subagent lifecycle / progress reminders |
 | **`FORGE_SKIP_STRUCTURAL_TOOLS=1`** | Skip structural probe install and runs |
+| **`FORGE_SKILL_ENGINE=0`** | Force legacy per-skill orchestrator bodies (skip declarative runner) |
 
-Full list: [`docs/environment.md`](docs/environment.md).
+Full list: [`docs/environment.md`](docs/environment.md). Declarative manifests + runner: [`docs/declarative-skills.md`](docs/declarative-skills.md).
 
 **Graphify (optional):** Build the graph with `forge graphify refresh` (or `FORGE_GRAPHIFY_COMMAND`); optional `forge graphify install-hook` for post-commit refresh. Workflow `--step` may spawn **debounced background** refresh when `graphify-out/` exists; the orchestrator **GRAPHIFY** banner prints on **`forge ship --step 1`** only. Claude hooks (`forge claude-graphify`) and Codex policy (`forge codex-agents`) enforce reading the map before search. After `pipx upgrade forge-next`, re-run those two commands. Full guide: [`docs/graphify.md`](docs/graphify.md).
 
