@@ -160,3 +160,109 @@ def test_vars_module_does_not_import_skill_runner():
         elif isinstance(node, ast.ImportFrom):
             mod = node.module or ""
             assert "skill_runner" not in mod
+
+
+def test_evaluate_mode_pre_and_ceremony_light_dual_axis():
+    """Mode variants stay orthogonal to ceremony overlay."""
+    from types import SimpleNamespace
+
+    from scripts.shared.orchestrator import SkillState
+    from scripts.shared.skill_manifest import load_manifest
+    from scripts.shared.skill_runner import (
+        resolve_and_persist_ceremony,
+        select_mode_and_ceremony,
+    )
+
+    manifest = load_manifest("evaluate", REPO_ROOT)
+    state = SkillState(skill_name="evaluate", max_step=7)
+    args = SimpleNamespace(mode="pre", ceremony="light", effort=None, quick=False)
+    resolve_and_persist_ceremony(state, args, step=1)
+    mode, ceremony = select_mode_and_ceremony(manifest, args, state)
+    assert mode == "pre"
+    assert ceremony == "light"
+    assert state.custom["ceremony"] == "light"
+    assert state.custom["ceremony_source"] == "cli"
+    assert state.custom.get("mode") in (None, "pre")  # mode set by runner separately
+
+
+def test_test_mode_flows_and_ceremony_medium_dual_axis():
+    from types import SimpleNamespace
+
+    from scripts.shared.orchestrator import SkillState
+    from scripts.shared.skill_manifest import load_manifest
+    from scripts.shared.skill_runner import (
+        resolve_and_persist_ceremony,
+        select_mode_and_ceremony,
+    )
+
+    manifest = load_manifest("test", REPO_ROOT)
+    state = SkillState(skill_name="test", max_step=7)
+    args = SimpleNamespace(mode="flows", ceremony="medium", effort=None, quick=False)
+    resolve_and_persist_ceremony(state, args, step=1)
+    state.custom["mode"] = "flows"
+    mode, ceremony = select_mode_and_ceremony(manifest, args, state)
+    assert mode == "flows"
+    assert ceremony == "medium"
+    assert state.custom["ceremony_source"] == "cli"
+
+
+def test_effort_aliases_to_ceremony_when_not_cli():
+    from types import SimpleNamespace
+
+    from scripts.shared.orchestrator import SkillState
+    from scripts.shared.skill_runner import resolve_and_persist_ceremony
+
+    state = SkillState(skill_name="evaluate", max_step=7)
+    args = SimpleNamespace(mode="pre", ceremony=None, effort="light", quick=False)
+    band = resolve_and_persist_ceremony(state, args, step=1)
+    assert band == "light"
+    assert state.custom["ceremony_source"] == "estimated"
+    assert "effort" in str(state.custom["ceremony_rationale"]).lower()
+
+
+def test_soft_when_gate_is_soft_only_for_listed_ceremony():
+    from scripts.shared.orchestrator import SkillState
+    from scripts.shared.schema_gate import gate_is_soft
+    from scripts.shared.skill_manifest import ManifestGate
+
+    gate = ManifestGate(
+        id="optional_on_light",
+        steps=(1,),
+        kind="schema",
+        schema="schemas/sidecars/design/design-spec-gate.schema.json",
+        soft_when=("light",),
+    )
+    state = SkillState(skill_name="design", max_step=8)
+    state.custom["ceremony"] = "light"
+    assert gate_is_soft(gate, state) is True
+
+    state.custom["ceremony"] = "medium"
+    assert gate_is_soft(gate, state) is False
+
+    # Deny-by-default: empty soft_when never softens via this field
+    hard = ManifestGate(
+        id="always_hard",
+        steps=(1,),
+        kind="schema",
+        schema="schemas/sidecars/design/design-spec-gate.schema.json",
+        soft_when=(),
+    )
+    state.custom["ceremony"] = "light"
+    assert gate_is_soft(hard, state) is False
+
+
+def test_select_variant_name_ignores_ceremony():
+    """Ceremony must not select mode variants (dual-axis overlay)."""
+    from types import SimpleNamespace
+
+    from scripts.shared.orchestrator import SkillState
+    from scripts.shared.skill_manifest import load_manifest
+    from scripts.shared.skill_runner import _select_variant_name
+
+    manifest = load_manifest("evaluate", REPO_ROOT)
+    state = SkillState(skill_name="evaluate", max_step=7)
+    state.custom["ceremony"] = "light"
+    args = SimpleNamespace(mode="pre", ceremony="light")
+    assert _select_variant_name(manifest, args, state=state) == "pre"
+    # No accidental compound key like pre-light
+    assert "pre-light" not in (manifest.variants or {})

@@ -307,8 +307,19 @@ def build_skill_handoff_menu(
     state: SkillState | None = None,
     state_path: Path | None = None,
 ) -> str:
-    """Build a numbered handoff menu for skill-chain transitions."""
-    from scripts.shared.handoff_menu import format_handoff_menu_lines, resolve_handoff_commands
+    """Build a numbered handoff menu for skill-chain transitions.
+
+    User-facing stdout is text-only. When ``state_path`` is set, the AskQuestion
+    payload is written to ``<state-dir>/handoff-multiselect.json`` and announced
+    on stderr as ``FORGE_HANDOFF_MULTISELECT_PATH=...``.
+    """
+    from scripts.shared.handoff_menu import (
+        build_handoff_multiselect_payload,
+        emit_handoff_multiselect_path,
+        format_handoff_menu_lines,
+        resolve_handoff_commands,
+        write_handoff_multiselect_sidecar,
+    )
     from scripts.shared.skill_chain import SKILL_CHAIN
 
     transition = SKILL_CHAIN.get(skill_name)
@@ -321,6 +332,18 @@ def build_skill_handoff_menu(
         default_cmd=transition.default,
         alternatives=list(transition.alternatives) or [],
     )
+
+    if state_path is not None:
+        payload = build_handoff_multiselect_payload(
+            skill_name,
+            default_cmd=default_cmd,
+            alternatives=alternatives,
+            state_path=state_path,
+        )
+        write_handoff_multiselect_sidecar(state_path, payload)
+        # Do not emit path here — clear_state_file archives the session dir;
+        # skill_runner re-emits FORGE_HANDOFF_MULTISELECT_PATH after archive.
+
     return "\n".join(
         format_handoff_menu_lines(
             skill_name,

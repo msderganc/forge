@@ -15,6 +15,11 @@ cli_flags:
     type: bool
     default: false
     help: "Set autonomy to Level 3 (full auto, pause at final approval)"
+  - name: "--ceremony"
+    type: str
+    default: null
+    choices: ["light", "medium", "detailed", "comprehensive"]
+    help: "Ceremony band (process depth). Overrides estimate; orthogonal to mode."
   - name: "--allow-spec-incomplete"
     type: bool
     default: false
@@ -49,7 +54,7 @@ cli_flags:
     help: "Required tracked follow-up when using --allow-issues-incomplete."
 steps:
   - step: 1
-    phase: Startup
+    phase: Frame
     prompt: design/startup
     variables_callable: "scripts.design.design_vars:build_variables"
     todos:
@@ -58,7 +63,7 @@ steps:
       - content: Initialize design state and memory directory
         activeForm: Initializing state
   - step: 2
-    phase: Scope & Team
+    phase: Orient
     prompt: design/scope
     variables_callable: "scripts.design.design_vars:build_variables"
     todos:
@@ -67,7 +72,7 @@ steps:
       - content: Compose agent team based on scope
         activeForm: Composing team
   - step: 3
-    phase: Investigation Dispatch
+    phase: Deepen — Investigation
     prompt: design/investigation
     variables_callable: "scripts.design.design_vars:build_variables"
     todos:
@@ -78,7 +83,7 @@ steps:
       - content: Wait for investigation artifacts
         activeForm: Waiting for artifacts
   - step: 4
-    phase: Investigation Review
+    phase: Deepen — Investigation Review
     prompt: design/investigation_review
     variables_callable: "scripts.design.design_vars:build_variables"
     todos:
@@ -87,7 +92,7 @@ steps:
       - content: Record findings and resolve blockers
         activeForm: Recording findings
   - step: 5
-    phase: Solution Dispatch
+    phase: Deepen — Solutions
     prompt: design/solution
     variables_callable: "scripts.design.design_vars:build_variables"
     todos:
@@ -96,7 +101,7 @@ steps:
       - content: Run brainstorming protocol (SCAMPER + Pugh Matrix)
         activeForm: Running brainstorming
   - step: 6
-    phase: Solution Review & Approval
+    phase: Decide
     prompt: design/approval
     variables_callable: "scripts.design.design_vars:build_variables"
     todos:
@@ -107,7 +112,7 @@ steps:
       - content: Present solutions to user for approval
         activeForm: Presenting solutions for approval
   - step: 7
-    phase: Spec → Issues
+    phase: Verify — Spec Issues
     prompt: design/spec_issues
     variables_callable: "scripts.design.design_vars:build_variables"
     todos:
@@ -125,8 +130,8 @@ steps:
       - content: Render dashboard and complete skill
         activeForm: Rendering dashboard
 gates:
-  # Shape: JSON Schema (hard-fail). Step 6 prepares sidecar only — residual python
-  # still early-returns at step 6; schema runs on steps that already hard-fail.
+  # Integrity gates: never soft_when — stay hard even at ceremony=light when
+  # spec_required. Shape: JSON Schema (hard-fail). Step 6 prepares sidecar only.
   - id: design_spec_shape
     steps: [7, 8]
     kind: schema

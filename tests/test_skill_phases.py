@@ -28,7 +28,7 @@ def test_step_for_phase_plan() -> None:
 
 def test_evaluate_mode_prefixed_phase() -> None:
     assert step_for_phase("evaluate", "pre-feasibility", variant="pre") == 2
-    assert phase_for_step("evaluate", 2, variant="pre") == "pre-feasibility"
+    assert phase_for_step("evaluate", 2, variant="pre") == "pre-orient-feasibility"
 
 
 def test_resolve_defaults_to_step_1() -> None:
@@ -65,7 +65,7 @@ def test_resolve_from_session(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -
 def test_build_next_command_uses_phase(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("FORGE_WORKFLOW_INVOCATION", "slash")
     cmd = build_next_command(Path("scripts/plan/plan.py"), 1, 7)
-    assert cmd == "/forge:plan --phase architecture-dispatch"
+    assert cmd == "/forge:plan --phase orient-architecture"
 
 
 def test_evaluate_ambiguous_phase_requires_mode() -> None:
@@ -96,13 +96,13 @@ def test_phase_names_for_mixed_migrated_and_unmigrated() -> None:
     assert sketch_phases[3] == "Handoff"
 
     plan_phases = phase_names_for("plan")
-    assert plan_phases[1] == "Context Detection"
+    assert plan_phases[1] == "Frame"
 
     design_phases = phase_names_for("design")
-    assert design_phases[1] == "Startup"
+    assert design_phases[1] == "Frame"
 
     diagnose_phases = phase_names_for("diagnose")
-    assert diagnose_phases[1] == "Frame the Problem"
+    assert diagnose_phases[1] == "Frame"
 
     # Non-CLI iterate skill remains on the Python map
     assert "iterate" in _SKILL_PHASE_NAMES

@@ -11,6 +11,11 @@ cli_flags:
     default: null
     choices: ["run", "flows", "ux"]
     help: "Skill mode: run (default) or flows (author mock flows). 'ux' redirects to forge ux-review"
+  - name: "--ceremony"
+    type: str
+    default: null
+    choices: ["light", "medium", "detailed", "comprehensive"]
+    help: "Ceremony band (process depth). Overrides estimate; orthogonal to --mode."
   - name: "--flow-type"
     type: str
     default: null
@@ -43,7 +48,7 @@ variants:
     max_step: 6
     steps:
       - step: 1
-        phase: Context Detection
+        phase: Frame
         prompt: test/context
         variables_callable: "scripts.test.test_vars:build_variables"
         todos:
@@ -52,7 +57,7 @@ variants:
           - content: Initialize test state
             activeForm: Initializing state
       - step: 2
-        phase: Test Discovery
+        phase: Orient — Discovery
         prompt: test/discovery
         variables_callable: "scripts.test.test_vars:build_variables"
         todos:
@@ -61,7 +66,7 @@ variants:
           - content: Identify coverage targets
             activeForm: Identifying coverage targets
       - step: 3
-        phase: Test Execution
+        phase: Act — Execution
         prompt: test/execution
         variables_callable: "scripts.test.test_vars:build_variables"
         todos:
@@ -70,14 +75,14 @@ variants:
           - content: Collect results and coverage data
             activeForm: Collecting results
       - step: 4
-        phase: Failure Analysis
+        phase: Deepen — Failures
         prompt: test/failure_analysis
         variables_callable: "scripts.test.test_vars:build_variables"
         todos:
           - content: Dispatch Investigator for failure root-cause analysis
             activeForm: Investigating failures
       - step: 5
-        phase: Coverage Gap Analysis
+        phase: Verify — Coverage
         prompt: test/coverage_gaps
         variables_callable: "scripts.test.test_vars:build_variables"
         todos:
@@ -86,7 +91,7 @@ variants:
           - content: Run mutation audit on critical paths
             activeForm: Running mutation audit
       - step: 6
-        phase: Report
+        phase: Handoff
         prompt: test/report
         variables_callable: "scripts.test.test_vars:build_variables"
         todos:
@@ -107,49 +112,49 @@ variants:
         callable: "scripts.test.test_vars:ingest_recommendation_gate"
     steps:
       - step: 1
-        phase: Flow Context Detection
+        phase: Frame — Flows
         prompt: test/flow_context
         variables_callable: "scripts.test.test_vars:build_variables"
         todos:
           - content: Detect framework, entry point, and roles for flows
             activeForm: Detecting flow context
       - step: 2
-        phase: Flow-Type Recommendation
+        phase: Orient — Flow Type
         prompt: test/flow_recommendation
         variables_callable: "scripts.test.test_vars:build_variables"
         todos:
           - content: Recommend flow type (scenario/bdd/http-replay/workflow-dryrun)
             activeForm: Recommending flow type
       - step: 3
-        phase: Scope Definition
+        phase: Decide — Scope
         prompt: test/flow_scope
         variables_callable: "scripts.test.test_vars:build_variables"
         todos:
           - content: Define flow scope and ingest recommendation sidecar
             activeForm: Defining flow scope
       - step: 4
-        phase: Scaffolding
+        phase: Act — Scaffold
         prompt: test/flow_scaffold
         variables_callable: "scripts.test.test_vars:build_variables"
         todos:
           - content: Scaffold flow files
             activeForm: Scaffolding flows
       - step: 5
-        phase: Mock Authoring
+        phase: Act — Author
         prompt: test/flow_author
         variables_callable: "scripts.test.test_vars:build_variables"
         todos:
           - content: Author mock flow bodies
             activeForm: Authoring mocks
       - step: 6
-        phase: Execution + Iteration
+        phase: Verify — Execute
         prompt: test/flow_execute
         variables_callable: "scripts.test.test_vars:build_variables"
         todos:
           - content: Execute flows and iterate
             activeForm: Executing flows
       - step: 7
-        phase: Report + Handoff
+        phase: Handoff
         prompt: test/flow_report
         variables_callable: "scripts.test.test_vars:build_variables"
         todos:

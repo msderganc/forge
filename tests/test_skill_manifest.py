@@ -225,3 +225,81 @@ post_run: "scripts.evil:hook"
     )
     with pytest.raises(SkillManifestError, match=r"post_run|hook|unknown"):
         load_manifest("sketch", tmp_path)
+
+
+def test_gate_soft_when_parses_and_defaults_empty(tmp_path: Path) -> None:
+    from scripts.shared.skill_manifest import load_manifest
+
+    _write_yaml(
+        tmp_path / "skills" / "sketch" / "manifest.yaml",
+        """
+manifest_version: 1
+skill: sketch
+max_step: 1
+steps:
+  - step: 1
+    phase: Startup
+    prompt: sketch/startup
+gates:
+  - id: soft_light
+    steps: [1]
+    kind: schema
+    schema: schemas/sidecars/design/design-spec-gate.schema.json
+    soft_when: [light]
+  - id: hard_default
+    steps: [1]
+    kind: schema
+    schema: schemas/sidecars/design/design-spec-gate.schema.json
+""".strip()
+        + "\n",
+    )
+    manifest = load_manifest("sketch", tmp_path)
+    soft = next(g for g in manifest.gates if g.id == "soft_light")
+    hard = next(g for g in manifest.gates if g.id == "hard_default")
+    assert soft.soft_when == ("light",)
+    assert hard.soft_when == ()
+
+
+def test_gate_soft_when_rejects_unknown_band(tmp_path: Path) -> None:
+    from scripts.shared.skill_manifest import SkillManifestError, load_manifest
+
+    _write_yaml(
+        tmp_path / "skills" / "sketch" / "manifest.yaml",
+        """
+manifest_version: 1
+skill: sketch
+max_step: 1
+steps:
+  - step: 1
+    phase: Startup
+    prompt: sketch/startup
+gates:
+  - id: bad
+    steps: [1]
+    kind: schema
+    schema: schemas/sidecars/design/design-spec-gate.schema.json
+    soft_when: [lite]
+""".strip()
+        + "\n",
+    )
+    with pytest.raises(SkillManifestError, match=r"soft_when|unknown|lite"):
+        load_manifest("sketch", tmp_path)
+
+
+def test_aligned_skills_declare_ceremony_cli_flag() -> None:
+    from scripts.shared.skill_manifest import load_manifest
+
+    for skill in (
+        "design",
+        "plan",
+        "diagnose",
+        "test",
+        "evaluate",
+        "implement",
+        "code-review",
+    ):
+        manifest = load_manifest(skill, REPO_ROOT)
+        names = {f.name for f in manifest.cli_flags}
+        assert "--ceremony" in names, skill
+        ceremony = next(f for f in manifest.cli_flags if f.name == "--ceremony")
+        assert ceremony.choices == ("light", "medium", "detailed", "comprehensive")

@@ -18,8 +18,10 @@ User-facing guides for installing and running Forge workflows. Internal design n
 | [structural-quality.md](structural-quality.md) | knip / madge / pyscn / skylos probes in code-review and evaluate |
 | [pyscn-quality-disposition.md](pyscn-quality-disposition.md) | Forge repo pyscn complexity/clone disposition and CI thresholds |
 | [sessions.md](sessions.md) | Parallel session directories under `.forge/sessions/` |
-| [environment.md](environment.md) | `FORGE_*` environment variables |
+| [environment.md](environment.md) | `FORGE_*` environment variables; shared `--ceremony` CLI |
 | [declarative-skills.md](declarative-skills.md) | Skill manifests, runner, gate kinds, asset sync, kill-switch |
+| [ceremony.md](ceremony.md) | Shared process spine + ceremony bands; dual-axis mode×ceremony; `--ceremony` |
+| [../templates/skill-process-spine.md](../templates/skill-process-spine.md) | Canonical spine slots and per-skill phase maps |
 
 ## Contributors and agents
 

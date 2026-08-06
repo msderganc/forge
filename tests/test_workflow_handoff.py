@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from scripts.shared.handoff_menu import (
@@ -31,13 +33,17 @@ def test_workflow_prefix_slash_when_forced(monkeypatch: pytest.MonkeyPatch) -> N
     )
 
 
-def test_handoff_menu_includes_multiselect_block(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_handoff_menu_is_numbered_text_only(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("FORGE_WORKFLOW_INVOCATION", "slash")
     menu = build_skill_handoff_menu("evaluate")
-    assert "handoff-multiselect" in menu
+    assert "WORKFLOW HANDOFF — evaluate complete" in menu
     assert "/forge:implement" in menu
-    assert "AskQuestion" in menu
-    assert "allow_multiple: true" in menu
+    assert "(stop)" in menu
+    assert "1." in menu
+    assert "handoff-multiselect" not in menu
+    assert "forge_handoff_multiselect" not in menu
+    assert "```handoff-multiselect" not in menu
+    assert "AskQuestion" not in menu
 
 
 def test_handoff_multiselect_payload_has_stop_and_defaults(
@@ -77,11 +83,11 @@ def test_build_next_command_respects_workflow_prefix(monkeypatch: pytest.MonkeyP
 
     monkeypatch.setenv("FORGE_WORKFLOW_INVOCATION", "slash")
     cmd = build_next_command(Path("scripts/plan/plan.py"), 1, 7)
-    assert cmd == "/forge:plan --phase architecture-dispatch"
+    assert cmd == "/forge:plan --phase orient-architecture"
 
     monkeypatch.setenv("FORGE_WORKFLOW_INVOCATION", "dollar")
     cmd = build_next_command(Path("scripts/plan/plan.py"), 1, 7)
-    assert cmd == "$forge:plan --phase architecture-dispatch"
+    assert cmd == "$forge:plan --phase orient-architecture"
 
 
 def test_handoff_menu_lines_slash_prefix(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -94,3 +100,28 @@ def test_handoff_menu_lines_slash_prefix(monkeypatch: pytest.MonkeyPatch) -> Non
     text = "\n".join(lines)
     assert "/forge:evaluate --mode pre" in text
     assert "/forge:implement" in text
+    assert "handoff-multiselect" not in text
+    assert "forge_handoff_multiselect" not in text
+
+
+def test_build_skill_handoff_menu_writes_sidecar_when_state_path(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from scripts.shared.handoff_menu import (
+        FORGE_HANDOFF_MULTISELECT_PATH_PREFIX,
+        HANDOFF_MULTISELECT_FILENAME,
+    )
+
+    monkeypatch.setenv("FORGE_WORKFLOW_INVOCATION", "slash")
+    state_path = tmp_path / "skill-plan.json"
+    state_path.write_text("{}", encoding="utf-8")
+    menu = build_skill_handoff_menu("plan", state_path=state_path)
+    assert "1." in menu
+    assert "forge_handoff_multiselect" not in menu
+    sidecar = state_path.parent / HANDOFF_MULTISELECT_FILENAME
+    assert sidecar.is_file()
+    assert "forge_handoff_multiselect" in sidecar.read_text(encoding="utf-8")
+    # Emit happens post-archive in skill_runner, not during menu build.
+    assert FORGE_HANDOFF_MULTISELECT_PATH_PREFIX not in capsys.readouterr().err

@@ -7,6 +7,11 @@ cli_flags:
     type: str
     default: null
     help: "Path to plan file (step 1 only; auto-detected from handoff if omitted)"
+  - name: "--ceremony"
+    type: str
+    default: null
+    choices: ["light", "medium", "detailed", "comprehensive"]
+    help: "Ceremony band (process depth). Overrides estimate; orthogonal to mode."
   - name: "--branch-prefix"
     type: str
     default: null
@@ -34,7 +39,7 @@ cli_flags:
     help: "Defer GRAPHIFY banners during implement wave steps 3–5."
 steps:
   - step: 1
-    phase: Plan Detection
+    phase: Frame
     prompt: implement/plan_detect
     variables_callable: "scripts.implement.implement_vars:build_variables"
     todos:
@@ -43,7 +48,7 @@ steps:
       - content: Initialize implement state
         activeForm: Initializing state
   - step: 2
-    phase: Branch Setup
+    phase: Orient — Branch
     prompt: implement/branch_setup
     variables_callable: "scripts.implement.implement_vars:build_variables"
     todos:
@@ -52,7 +57,7 @@ steps:
       - content: Identify waves from parallelization map
         activeForm: Identifying waves
   - step: 3
-    phase: Wave Dispatch
+    phase: Act — Wave Dispatch
     prompt: implement/wave_dispatch
     variables_callable: "scripts.implement.implement_vars:build_variables"
     todos:
@@ -61,7 +66,7 @@ steps:
       - content: Wait for wave task completion
         activeForm: Waiting for wave completion
   - step: 4
-    phase: Wave Review
+    phase: Decide — Wave Review
     prompt: implement/wave_review
     variables_callable: "scripts.implement.implement_vars:build_variables"
     todos:
@@ -70,7 +75,7 @@ steps:
       - content: Resolve findings from reviews
         activeForm: Resolving findings
   - step: 5
-    phase: Wave Completion
+    phase: Act — Wave Complete
     prompt: implement/wave_complete
     variables_callable: "scripts.implement.implement_vars:build_variables"
     todos:
@@ -79,7 +84,7 @@ steps:
       - content: Check for next wave or proceed to integration verification
         activeForm: Checking wave status
   - step: 6
-    phase: Integration Verification
+    phase: Verify — Integration
     prompt: implement/integration_check
     variables_callable: "scripts.implement.implement_vars:build_variables"
     todos:
@@ -88,7 +93,7 @@ steps:
       - content: Run regression sweep and performance check
         activeForm: Running regression sweep
   - step: 7
-    phase: Documentation
+    phase: Verify — Documentation
     prompt: implement/documentation
     variables_callable: "scripts.implement.implement_vars:build_variables"
     todos:

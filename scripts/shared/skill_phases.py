@@ -35,6 +35,87 @@ _SCRIPT_SKILL_ALIASES: dict[str, str] = {
     "develop": "design",
 }
 
+# Legacy --phase slugs that still resolve after spine renames (resume / muscle memory).
+_PHASE_SLUG_ALIASES: dict[str, dict[str, str]] = {
+    "plan": {
+        "context-detection": "frame",
+        "architecture-dispatch": "orient-architecture",
+        "plan-creation-dispatch": "deepen-plan-creation",
+        "plan-review-loop": "deepen-review",
+        "user-approval": "decide",
+        "documentation-planning": "verify-documentation",
+    },
+    "design": {
+        "startup": "frame",
+        "scope-team": "orient",
+        "investigation-dispatch": "deepen-investigation",
+        "investigation-review": "deepen-investigation-review",
+        "solution-dispatch": "deepen-solutions",
+        "solution-review-approval": "decide",
+        "spec-issues": "verify-spec-issues",
+    },
+    "diagnose": {
+        "frame-the-problem": "frame",
+        "reproduce-observe": "orient-reproduce",
+        "analyze-rank": "decide-analyze-rank",
+        "solution-generation": "act-solutions",
+        "implement-validate": "verify-fix",
+        "report-prevention": "handoff",
+    },
+    "implement": {
+        "plan-detection": "frame",
+        "branch-setup": "orient-branch",
+        "wave-dispatch": "act-wave-dispatch",
+        "wave-review": "decide-wave-review",
+        "wave-completion": "act-wave-complete",
+        "integration-verification": "verify-integration",
+        "documentation": "verify-documentation",
+    },
+    "code-review": {
+        "target-detection": "frame",
+        "mode-selection": "orient-mode",
+        "team-dispatch": "orient-dispatch",
+        "deep-dive": "deepen",
+        "discussion": "decide",
+        "report": "handoff",
+    },
+    "test": {
+        "context-detection": "frame",
+        "test-discovery": "orient-discovery",
+        "test-execution": "act-execution",
+        "failure-analysis": "deepen-failures",
+        "coverage-gap-analysis": "verify-coverage",
+        "report": "handoff",
+        "flow-context-detection": "frame-flows",
+        "flow-type-recommendation": "orient-flow-type",
+        "scope-definition": "decide-scope",
+        "scaffolding": "act-scaffold",
+        "mock-authoring": "act-author",
+        "execution-iteration": "verify-execute",
+        "report-handoff": "handoff",
+    },
+    "evaluate": {
+        "plan-parsing": "frame-plan-parsing",
+        "feasibility": "orient-feasibility",
+        "completeness": "orient-completeness",
+        "codebase-alignment": "deepen-codebase-alignment",
+        "risk-dependencies": "deepen-risk",
+        "discussion": "decide",
+        "report": "handoff",
+        "completeness-audit": "orient-completeness-audit",
+        "correctness": "deepen-correctness",
+        "code-quality": "deepen-code-quality",
+        "performance": "deepen-performance",
+        "operational-readiness": "verify-operational",
+    },
+}
+
+
+def apply_phase_slug_alias(skill: str, key: str) -> str:
+    """Map a legacy phase slug onto the current spine slug when known."""
+    aliases = _PHASE_SLUG_ALIASES.get(canonical_skill_name(skill), {})
+    return aliases.get(key, key)
+
 
 def phase_slug(name: str) -> str:
     """Stable kebab-case slug from a display phase name."""

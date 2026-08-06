@@ -4,10 +4,15 @@ from __future__ import annotations
 
 import sys
 
-from scripts.shared.skill_phases import _slug_index, canonical_skill_name
+from scripts.shared.skill_phases import (
+    _slug_index,
+    apply_phase_slug_alias,
+    canonical_skill_name,
+)
 
 
 def _evaluate_step_with_variant(skill: str, key: str, variant: str) -> int:
+    key = apply_phase_slug_alias(skill, key)
     index = _slug_index(skill, variant)
     if key in index:
         return index[key]
@@ -18,6 +23,7 @@ def _evaluate_step_with_variant(skill: str, key: str, variant: str) -> int:
 
 
 def _evaluate_step_unscoped(skill: str, key: str) -> int:
+    key = apply_phase_slug_alias(skill, key)
     matches: list[tuple[str, int]] = []
     for mode in ("pre", "post", "review"):
         idx = _slug_index(skill, mode)
@@ -56,6 +62,7 @@ def resolve_generic_step(
     key: str,
     variant: str | None,
 ) -> int:
+    key = apply_phase_slug_alias(skill, key)
     index = _slug_index(skill, variant)
     if key in index:
         return index[key]

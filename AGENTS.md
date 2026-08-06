@@ -2,22 +2,18 @@
 
 ## Skill Handoff Menu
 
-When a skill completes its final step, the footer displays a **multiselect handoff** (machine-readable block + text fallback). Agents in Cursor/Claude should present options with **AskQuestion** (`allow_multiple: true`).
+When a skill completes its final step, the footer displays a **numbered text handoff** (default + alternatives + stop). Machine payload for host pickers is written to `<state-dir>/handoff-multiselect.json` (survives under `sessions/_archive/` after clear); stderr may include `FORGE_HANDOFF_MULTISELECT_PATH=<path>`.
 
-**Menu format:**
+**Agent policy:**
+- If **AskQuestion** (or an equivalent host picker) is in the tool list: load the sidecar/payload and present options with `allow_multiple: true`. **Never** paste raw JSON or `handoff-multiselect` fences into the user chat.
+- If AskQuestion / host picker is **unavailable**: show the numbered text menu only (reply `yes`, `1`, pick numbers, or `stop`).
+
+**Menu format (user-facing):**
 ```
 WORKFLOW HANDOFF — <skill> complete
 ==================================
 
-**Agent (Cursor / Claude):** Present the `handoff-multiselect` block with AskQuestion (allow_multiple: true).
-
-```handoff-multiselect
-{ "type": "forge_handoff_multiselect", "options": [...], "default_option_ids": [...] }
-```
-
-**Text fallback** (prefix `/forge:` in Cursor/Claude, `$forge:` in Codex):
-
-Reply "yes" or "1" for the default, or pick numbers:
+Reply "yes" or "1" for the default, or pick numbers (prefix /forge: or $forge:):
   1. `/forge:<default>` — description (default)
   2. `/forge:<alt>` — description
   N. `(stop)` — exit the workflow here
@@ -27,7 +23,7 @@ State file: <path> — resume with `forge takeover` (or `/forge:takeover` / `$fo
 
 Invocation prefix: **`/forge:`** when `FORGE_WORKFLOW_INVOCATION=slash`, repo has `.cursor/`, or `CURSOR_*` env is set; otherwise **`$forge:`** (Codex). Override with `FORGE_WORKFLOW_INVOCATION=slash|dollar`.
 
-The canonical skill-chain mapping lives in `scripts/shared/skill_chain.py` as the `SKILL_CHAIN` dict, mapping current skill to `SkillTransition(default, alternatives)`. The renderer `build_skill_handoff_menu(current_skill, state)` in `scripts/shared/handoff_io.py` / `handoff_menu.py` produces the multiselect block and text fallback. Per-skill context-aware injection is supported — e.g., `forge:test` defaults to **`ship`** when the run is green and to **`diagnose`** when there are failures (`ship` stays as the top alternative in that case); when `forge:diagnose` finishes with `fix_complexity` **`large`**, the default next command is **`design`** (with **`plan`** as default when **`complex`**).
+The canonical skill-chain mapping lives in `scripts/shared/skill_chain.py` as the `SKILL_CHAIN` dict, mapping current skill to `SkillTransition(default, alternatives)`. The renderer `build_skill_handoff_menu(current_skill, state)` in `scripts/shared/handoff_io.py` / `handoff_menu.py` produces the numbered text menu and (when `state_path` is set) the sidecar payload. Per-skill context-aware injection is supported — e.g., `forge:test` defaults to **`ship`** when the run is green and to **`diagnose`** when there are failures (`ship` stays as the top alternative in that case); when `forge:diagnose` finishes with `fix_complexity` **`large`**, the default next command is **`design`** (with **`plan`** as default when **`complex`**).
 
 The `(stop)` option is always last. The state file persists, and workflows can resume with `forge takeover` at any time.
 
@@ -45,6 +41,18 @@ in the manifest (not `skill_phases.py`). Kill-switch: `FORGE_SKILL_ENGINE=0` →
 legacy `*_legacy` / `orchestrate_legacy` bodies. **Diagnose** gates remain
 `kind: python` (register validators); there are no diagnose sidecar schemas in
 this release. Guide: [`docs/declarative-skills.md`](docs/declarative-skills.md).
+
+## Shared process + ceremony
+
+Aligned skills share one process spine (Frame → Orient → Deepen → Decide → Act →
+Verify → Handoff); see [`templates/skill-process-spine.md`](templates/skill-process-spine.md).
+**Ceremony** (`light` | `medium` | `detailed` | `comprehensive`) is the binding
+depth knob — CLI `--ceremony` wins over estimate; persist `ceremony` /
+`ceremony_rationale` / `ceremony_source` on state. Mode axes (`evaluate`
+pre/post, `test` run/flows) stay orthogonal to ceremony. Prefer `--ceremony`
+over fragmented user vocab (`scope_tier`, plan `lite`, CR `--effort` as primary).
+Integrity gates stay hard unless allowlisted `soft_when`. Full guide:
+[`docs/ceremony.md`](docs/ceremony.md).
 
 ## Graphify in skill steps
 

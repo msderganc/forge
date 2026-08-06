@@ -49,6 +49,11 @@ from scripts.shared.skill_manifest import (
     ManifestStep,
     load_manifest,
 )
+from scripts.shared.ceremony import (
+    Ceremony,
+    estimate_ceremony,
+    normalize_ceremony,
+)
 
 # Env value that forces legacy orchestrator bodies (shim / optional dispatch).
 SKILL_ENGINE_KILL_SWITCH = "0"
@@ -143,12 +148,22 @@ def run_skill(skill: str, argv: list[str], *, repo_root: Path | None = None) -> 
     _apply_override_args_to_state(state, args)
     if variant_name:
         state.custom.setdefault("mode", variant_name)
+    # Dual-axis: mode selects the variant view; ceremony overlays depth/gates.
+    resolve_and_persist_ceremony(state, args, step=step)
     state.current_step = step
     save_state(state, state_path)
 
     variables = _build_step_variables(
         step_spec, state, root, manifest, step=step, state_path=state_path
     )
+    # Step-1 vars often set plan_mode / scope_tier after first estimate — refresh
+    # when ceremony was only estimated (CLI/inherited stay locked).
+    if step == 1 and str(state.custom.get("ceremony_source") or "") == "estimated":
+        state.custom.pop("ceremony", None)
+        state.custom.pop("ceremony_source", None)
+        state.custom.pop("ceremony_rationale", None)
+        resolve_and_persist_ceremony(state, args, step=1)
+        save_state(state, state_path)
     append_body = str(variables.pop("__APPEND__", "") or "")
     phase_label = str(variables.pop("__PHASE_LABEL__", "") or "") or step_spec.phase
     # Vars may re-select mode (evaluate detect_mode); refresh view if needed.
@@ -204,6 +219,10 @@ def run_skill(skill: str, argv: list[str], *, repo_root: Path | None = None) -> 
         body += f"\n\nHandoff written to: {handoff_path}"
         handoff_menu = build_skill_handoff_menu(skill, state, state_path)
         clear_state_file(state_path)
+        # Sidecar moves with the session under _archive; re-emit post-archive path.
+        from scripts.shared.handoff_menu import emit_handoff_multiselect_path
+
+        emit_handoff_multiselect_path(state_path)
         run_summary = f"Completed {skill} workflow and wrote handoff."
     elif await_same:
         state.custom["session_visits"] = int(state.custom.get("session_visits") or 0) + 1
@@ -323,13 +342,27 @@ def run_declared_gates_for_view(
     state_path: Path,
 ) -> None:
     """Run gates from an effective (possibly variant) view."""
+    from scripts.shared.ceremony import normalize_ceremony
+
     gates = _gates_for_step(view.gates, step)
     if not gates:
         return
+    ceremony = normalize_ceremony(
+        str(state.custom.get("ceremony"))
+        if state.custom.get("ceremony") is not None
+        else None
+    )
     for gate in gates:
+        soft = bool(ceremony and ceremony in (gate.soft_when or ()))
         if gate.kind == "python":
             if not gate.callable:
                 raise SystemExit(f"ERROR: gate {gate.id!r} kind=python missing callable")
+            if soft:
+                print(
+                    f"NOTE: soft_when skipped gate {gate.id!r} at ceremony={ceremony}",
+                    file=sys.stderr,
+                )
+                continue
             fn = resolve_callable(gate.callable)
             fn(state=state, step=step, state_path=state_path, gate=gate)
         elif gate.kind == "schema":
@@ -363,6 +396,12 @@ def _select_variant_name(
     *,
     state: SkillState | None,
 ) -> str | None:
+    """Select mode variant only (evaluate pre/post, test run/flows, …).
+
+    Dual-axis overlay: ceremony is resolved separately via
+    ``resolve_and_persist_ceremony`` and must NOT drive variant selection.
+    Ceremony softens gates / collapses depth on the mode-selected view.
+    """
     if not manifest.variants:
         return None
     candidates: list[str] = []
@@ -380,6 +419,104 @@ def _select_variant_name(
         if preferred in manifest.variants:
             return preferred
     return next(iter(manifest.variants))
+
+
+def resolve_and_persist_ceremony(
+    state: SkillState,
+    args: Any,
+    *,
+    step: int,
+) -> Ceremony:
+    """Resolve ceremony band and persist onto ``state.custom``.
+
+    Priority: CLI ``--ceremony`` → ``inherited_ceremony`` → estimate from
+    effort / plan_mode / scope_tier / quick. ``--effort`` is an alias that
+    maps to ceremony when ceremony is not from CLI.
+    """
+    cli_raw = getattr(args, "ceremony", None)
+    if cli_raw is not None and str(cli_raw).strip():
+        band = normalize_ceremony(str(cli_raw))
+        if band:
+            state.custom["ceremony"] = band
+            state.custom["ceremony_rationale"] = "CLI --ceremony"
+            state.custom["ceremony_source"] = "cli"
+            return band
+
+    # Resume: keep a previously resolved ceremony unless CLI overrides.
+    existing = normalize_ceremony(
+        str(state.custom.get("ceremony"))
+        if state.custom.get("ceremony") is not None
+        else None
+    )
+    existing_source = str(state.custom.get("ceremony_source") or "")
+    if step > 1 and existing and existing_source in (
+        "cli",
+        "inherited",
+        "estimated",
+        "escalated",
+    ):
+        return existing
+
+    if existing_source == "cli" and existing:
+        return existing
+
+    effort_raw = getattr(args, "effort", None)
+    if effort_raw is None:
+        effort_raw = state.custom.get("effort")
+
+    plan_mode = state.custom.get("plan_mode")
+    mode_val = state.custom.get("mode")
+    if plan_mode is None and mode_val in ("lite", "default"):
+        plan_mode = mode_val
+
+    inherited_raw = state.custom.get("inherited_ceremony")
+    signals = {
+        "inherited_ceremony": inherited_raw,
+        # --effort aliases ceremony when --ceremony was not passed.
+        "effort": effort_raw,
+        "cli_effort": effort_raw,
+        "plan_mode": plan_mode,
+        "scope_tier": state.custom.get("scope_tier") or state.custom.get("size"),
+        "quick": bool(
+            getattr(state, "quick_mode", False)
+            or state.custom.get("quick_mode")
+            or getattr(args, "quick", False)
+        ),
+        "severity": state.custom.get("severity"),
+    }
+    band, rationale = estimate_ceremony(signals)
+
+    inherited = normalize_ceremony(
+        str(inherited_raw) if inherited_raw is not None else None
+    )
+    if inherited and band == inherited:
+        source = "inherited"
+    else:
+        source = "estimated"
+
+    state.custom["ceremony"] = band
+    state.custom["ceremony_rationale"] = rationale
+    state.custom["ceremony_source"] = source
+    return band
+
+
+def select_mode_and_ceremony(
+    manifest: Manifest,
+    args: Any,
+    state: SkillState,
+) -> tuple[str | None, str]:
+    """Return ``(mode_variant_name, ceremony)`` for dual-axis selection tests."""
+    mode = _select_variant_name(manifest, args, state=state)
+    ceremony = normalize_ceremony(
+        str(state.custom.get("ceremony"))
+        if state.custom.get("ceremony") is not None
+        else None
+    )
+    if ceremony is None:
+        ceremony = resolve_and_persist_ceremony(
+            state, args, step=int(state.current_step or 1)
+        )
+    return mode, str(ceremony)
 
 
 def _effective_view(manifest: Manifest, variant_name: str | None) -> _EffectiveView:
@@ -615,6 +752,7 @@ def _apply_override_args_to_state(state: SkillState, args: Any) -> None:
         "defer_graphify_waves",
         "no_structural",
         "effort",
+        "ceremony",
         "allow_spec_incomplete",
         "spec_override_reason",
         "spec_override_requested_by",

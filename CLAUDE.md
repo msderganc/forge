@@ -10,6 +10,14 @@ This project has a knowledge graph at `graphify-out/` with god nodes, community 
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
 - **Corpus hygiene:** Graphify reads **`.graphifyignore`**, not `.gitignore`. Always exclude runtime/tooling dumps (`.forge/`, `.codex/`, `.pyscn/`, `.skylos/`, `.serena/`, `.venv/`, `graphify-out/`, `dist/`/`build/`, caches). Add new dump dirs to `.graphifyignore`; after changes, purge `graphify-out/cache` and run `graphify update . --force`.
 
+### Shared process + ceremony
+
+Aligned Forge skills share one spine (Frame → … → Handoff); depth is a binding
+**ceremony** band (`--ceremony light|medium|detailed|comprehensive`). Mode
+(`evaluate` pre/post, `test` run/flows) is orthogonal. See
+[`docs/ceremony.md`](docs/ceremony.md) and
+[`templates/skill-process-spine.md`](templates/skill-process-spine.md).
+
 ### Forge workflow skills (`forge:*` slash commands)
 
 When you run a Forge workflow (`/forge:design`, `/forge:plan`, etc.):

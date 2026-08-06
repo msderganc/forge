@@ -80,7 +80,7 @@ def test_plan_step1_and_max_step(forge_runtime, monkeypatch: pytest.MonkeyPatch,
     code = _run("plan", ["--step", "1"], monkeypatch=monkeypatch)
     assert code == 0
     out = capsys.readouterr().out
-    assert "Context Detection" in out
+    assert "Frame" in out
 
 
 def test_implement_step1_and_max_step(forge_runtime, monkeypatch: pytest.MonkeyPatch, capsys):
