@@ -99,6 +99,16 @@ PROMPT_MARKERS: dict[str, dict[int, list[str]]] = {
         6: ["discuss"],
         7: ["report"],
     },
+    "evaluate:post": {
+        1: ["plan", "pars"],
+        2: ["complet"],
+        3: ["correct"],
+        4: ["quality"],
+        5: ["perform"],
+        6: ["operational", "readiness"],
+        7: ["discuss"],
+        8: ["report"],
+    },
     "test:run": {
         1: ["test", "context"],
         2: ["discover"],
@@ -109,15 +119,24 @@ PROMPT_MARKERS: dict[str, dict[int, list[str]]] = {
     "test:flows": {
         1: ["flow", "context"],
         2: ["recommend"],
+        3: ["scope"],
+        4: ["scaffold"],
+        5: ["author", "mock"],
+        6: ["execut"],
+        7: ["report", "handoff"],
     },
     "diagnose": {
-        1: ["diagnose", "frame", "problem"],
+        1: ["diagnose", "frame"],
         2: ["reproduc", "evidence"],
         3: ["5 why", "whys", "deepen"],
         4: ["analy"],
         5: ["solution"],
         6: ["validate", "fix", "implement"],
         7: ["report", "prevention"],
+    },
+    "plan:ceremony-light": {
+        1: ["plan", "frame"],
+        2: ["architect", "orient"],
     },
 }
 
@@ -444,6 +463,36 @@ def _prepare_design(step: int, state_path: Path) -> None:
         _inject_design_spec_sidecars(state_path)
 
 
+def _prepare_flows(step: int, state_path: Path) -> None:
+    """Inject recommendation sidecar so flows steps 3+ can render past the gate."""
+    if step < 3:
+        return
+    sidecar = state_path.parent / ".test-recommendation-step2.json"
+    if sidecar.is_file():
+        return
+    sidecar.write_text(
+        json.dumps(
+            {
+                "chosen": "scenario",
+                "reasoning": "e2e prompt-walk default scenario flows",
+                "confidence": 0.9,
+                "alternatives": ["bdd"],
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    def mut(c: dict) -> None:
+        c["mode"] = "flows"
+        c["flow_type"] = "scenario"
+        c.setdefault("framework", "pytest")
+        c.setdefault("entry_point", "cli")
+        c.setdefault("roles", ["anonymous"])
+
+    _patch_state(state_path, mut)
+
+
 def walk_skill(
     skill: str,
     *,
@@ -611,8 +660,28 @@ def main() -> int:
             "evaluate:pre",
             None,
         ),
+        (
+            "evaluate",
+            8,
+            ["--mode", "post", "--plan", str(plan_file)],
+            "evaluate:post",
+            None,
+        ),
         ("test", 6, ["--mode", "run"], "test:run", None),
-        ("test", 2, ["--mode", "flows", "--flow-type", "scenario"], "test:flows", None),
+        (
+            "test",
+            7,
+            ["--mode", "flows", "--flow-type", "scenario"],
+            "test:flows",
+            _prepare_flows,
+        ),
+        (
+            "plan",
+            2,
+            ["--mode", "lite", "--force", "--ceremony", "light"],
+            "plan:ceremony-light",
+            None,
+        ),
         ("diagnose", 7, [], None, _prepare_diagnose),
     ]
 

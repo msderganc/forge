@@ -85,8 +85,10 @@ def test_sketch_handoff_menu_defaults_to_design(tmp_path, monkeypatch):
     state = SkillState(skill_name="sketch", max_step=3)
     menu = build_skill_handoff_menu("sketch", state, sp)
     assert "$forge:design" in menu
-    assert "handoff-multiselect" in menu
     assert "WORKFLOW HANDOFF — sketch complete" in menu
+    assert "(stop)" in menu
+    assert "handoff-multiselect" not in menu
+    assert "forge_handoff_multiselect" not in menu
 
 
 def test_skill_chain_sketch_entry():

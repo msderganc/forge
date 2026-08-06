@@ -96,8 +96,18 @@ as the primary source.
 - Gates: `scripts.diagnose.diagnose_gates` / register validators as **python** escapes
 - Optional future ADR may revisit register schemas; not a success criterion here
 
+## Process spine and ceremony
+
+Aligned skills share one spine (Frame → … → Handoff). Depth is a binding
+**ceremony** band (`light` → `comprehensive`), selected via `--ceremony` or
+estimate, orthogonal to skill **mode** variants (`evaluate` pre/post, `test`
+run/flows). See [`ceremony.md`](ceremony.md) and
+[`templates/skill-process-spine.md`](../templates/skill-process-spine.md).
+
 ## Related
 
-- [`environment.md`](environment.md) — `FORGE_*` variables including kill-switch
+- [`ceremony.md`](ceremony.md) — spine + ceremony bands + `--ceremony` CLI
+- [`templates/skill-process-spine.md`](../templates/skill-process-spine.md) — slot maps
+- [`environment.md`](environment.md) — `FORGE_*` variables including kill-switch; `--ceremony`
 - [`AGENTS.md`](../AGENTS.md) — orchestration contracts and handoffs
 - [`sessions.md`](sessions.md) — `.forge/sessions/` layout

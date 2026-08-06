@@ -30,7 +30,7 @@ def test_diagnose_manifest_python_gates_only():
 
     manifest = load_manifest("diagnose", REPO_ROOT)
     assert manifest.max_step == 7
-    assert manifest.steps[0].phase == "Frame the Problem"
+    assert manifest.steps[0].phase == "Frame"
     assert all(g.kind == "python" for g in manifest.gates)
     assert not any(g.kind == "schema" for g in manifest.gates)
     assert all(g.callable and "diagnose_gates" in g.callable for g in manifest.gates)
@@ -46,7 +46,7 @@ def test_diagnose_step1_frame_the_problem(forge_runtime, monkeypatch, capsys):
     code = run_skill("diagnose", ["--step", "1"], repo_root=REPO_ROOT)
     assert code == 0
     out = capsys.readouterr().out
-    assert "Frame the Problem" in out
+    assert "Frame" in out
 
 
 def test_diagnose_gate_escape_invoked(forge_runtime, monkeypatch, capsys):
@@ -100,5 +100,5 @@ def test_diagnose_removed_from_skill_phases_map():
 
     assert "diagnose" not in _SKILL_PHASE_NAMES
     phases = phase_names_for("diagnose")
-    assert phases[1] == "Frame the Problem"
-    assert phases[7] == "Report & Prevention"
+    assert phases[1] == "Frame"
+    assert phases[7] == "Handoff"

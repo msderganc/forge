@@ -76,7 +76,7 @@ def test_design_step1_gates_and_cli_flags(forge_runtime, monkeypatch, capsys):
     code = _run("design", ["--step", "1"], monkeypatch=monkeypatch)
     assert code == 0
     out = capsys.readouterr().out
-    assert "Startup" in out
+    assert "Frame" in out
 
 
 def test_evaluate_pre_and_post_variants(forge_runtime, monkeypatch, capsys):
@@ -180,12 +180,12 @@ def test_test_run_and_flows_variants(forge_runtime, monkeypatch, capsys):
     code = _run("test", ["--step", "1", "--mode", "run"], monkeypatch=monkeypatch)
     assert code == 0
     out = capsys.readouterr().out
-    assert "Context Detection" in out
+    assert "Frame" in out
 
     code = _run("test", ["--step", "1", "--mode", "flows"], monkeypatch=monkeypatch)
     assert code == 0
     out = capsys.readouterr().out
-    assert "Flow Context Detection" in out
+    assert "Frame" in out
 
 
 def test_test_ux_mode_rejected_via_test_cli(forge_runtime, monkeypatch, capsys):
@@ -207,6 +207,7 @@ def test_phase_keys_removed_from_skill_phases():
         assert key not in sp._SKILL_PHASE_NAMES
     # Still resolvable via manifest
     assert sp.phase_names_for("takeover")[1] == "Initialize + route"
-    assert sp.phase_names_for("design")[1] == "Startup"
-    assert sp.phase_names_for("evaluate", "pre")[2] == "Feasibility"
-    assert sp.phase_names_for("test", "flows")[1] == "Flow Context Detection"
+    assert sp.phase_names_for("design")[1] == "Frame"
+    assert sp.phase_names_for("evaluate", "pre")[2].startswith("Orient")
+    assert "Feasibility" in sp.phase_names_for("evaluate", "pre")[2]
+    assert sp.phase_names_for("test", "flows")[1].startswith("Frame")

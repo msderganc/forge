@@ -23,13 +23,28 @@ When unsure between two tiers, pick the **lower** one. Escalating size or promot
 - Opportunities and delighters stay visible under **Scope expansion** — never silently become In scope.
 - Promoting an expansion usually bumps size and must re-confirm the tier.
 
-## Ceremony matrix
+## Ceremony bands (user-facing depth)
 
-| Size | Sketch | Design | Plan | Evaluate | Implement | Code-review | Test | Takeover |
+Prefer **`--ceremony light|medium|detailed|comprehensive`** over scattered depth knobs.
+Legacy maps (read old values; write ceremony going forward):
+
+| Ceremony | ≈ size / `scope_tier` | Plan mode | Evaluate/CR `--effort` |
+|----------|------------------------|-----------|-------------------------|
+| **light** | small / `trivial` | `lite` | `light` / quick |
+| **medium** | medium | `default` | `standard` |
+| **detailed** | large | `default` | `thorough` |
+| **comprehensive** | large (max deepen) | `default` | `thorough` |
+
+Shared spine slots and collapse rules: `templates/skill-process-spine.md`.
+API: `scripts/shared/ceremony.py`.
+
+## Ceremony matrix (by size → band)
+
+| Size → ceremony | Sketch | Design | Plan | Evaluate | Implement | Code-review | Test | Takeover |
 |------|--------|--------|------|----------|-----------|-------------|------|----------|
-| **Small** (`trivial`) | Short dialogue | No formal spec; lean team | **`lite`**, ≤3 tasks | Skip heavy pre/post phases | Lean review; single branch | **`light`** + structural probes (quick subset) | Core levels; no L8–9 by default | Skip evaluate; severity-filter gates |
-| **Medium** | Normal coverage | Spec when required | lite/default by risk | Subset of phases | Standard review | **`standard`** (trimmed team) + structural | Diff-scoped gaps | Normal pipeline; severity filter |
-| **Large** | Confirm upsizing | Full spec/issues | **`default`** | Full phases | Full checklist | **`thorough`** + broader structural fan-out | Full + mutation if warranted | Full pipeline |
+| **Small** → **light** (`trivial`) | Short dialogue | No formal spec; lean team | **`lite`**, ≤3 tasks | Skip heavy pre/post phases | Lean review; single branch | **`light`** + structural probes (quick subset) | Core levels; no L8–9 by default | Skip evaluate; severity-filter gates |
+| **Medium** → **medium** | Normal coverage | Spec when required | lite/default by risk | Subset of phases | Standard review | **`standard`** (trimmed team) + structural | Diff-scoped gaps | Normal pipeline; severity filter |
+| **Large** → **detailed** (+ comprehensive when max deepen) | Confirm upsizing | Full spec/issues | **`default`** | Full phases | Full checklist | **`thorough`** + broader structural fan-out | Full + mutation if warranted | Full pipeline |
 
 ## Structural review (every code change)
 

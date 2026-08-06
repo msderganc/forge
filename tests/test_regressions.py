@@ -905,7 +905,7 @@ def test_implement_next_command_supports_target_step():
     from scripts.implement.implement import _next_command
 
     cmd = _next_command(5, target_step=3)
-    assert "--phase wave-dispatch" in cmd
+    assert "--phase act-wave-dispatch" in cmd
 
     # target_step beyond MAX is rejected.
     assert _next_command(5, target_step=99) == ""
@@ -929,7 +929,7 @@ def test_implement_step3_auto_falls_back_to_direct_mode_when_no_waves(fresh_stat
     assert state.custom["implementation_mode"] == "direct"
     assert state.custom["total_waves"] == 1
     assert "direct implementation" in output.lower()
-    assert "next step is clear: continue directly to **phase `wave-review`**." in output.lower()
+    assert "next step is clear: continue directly to **phase `decide-wave-review`**." in output.lower()
     assert "skipping wave dispatch and review" not in output.lower()
 
 
@@ -1597,15 +1597,17 @@ def test_skill_chain_default_for_each_skill():
 
 
 def test_build_skill_handoff_menu_renders_numbered_options(capsys, monkeypatch):
-    """Output contains numbered options 1-N and a (stop) last item."""
+    """Output contains numbered options 1-N and a (stop) last item; no JSON dump."""
     from scripts.shared.orchestrator import build_skill_handoff_menu
 
     monkeypatch.setenv("FORGE_WORKFLOW_INVOCATION", "dollar")
     menu = build_skill_handoff_menu("plan")
     assert "$forge:" in menu
-    assert "handoff-multiselect" in menu
     assert "(stop)" in menu
     assert "WORKFLOW HANDOFF — plan complete" in menu
+    assert "1." in menu
+    assert "handoff-multiselect" not in menu
+    assert "forge_handoff_multiselect" not in menu
 
 
 def test_handoff_menu_documents_default_shortcuts(capsys):

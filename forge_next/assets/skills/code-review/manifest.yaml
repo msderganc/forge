@@ -16,11 +16,16 @@ cli_flags:
     type: str
     default: null
     help: "Plan path or keywords"
+  - name: "--ceremony"
+    type: str
+    default: null
+    choices: ["light", "medium", "detailed", "comprehensive"]
+    help: "Ceremony band (process depth). Overrides estimate; orthogonal to --mode."
   - name: "--effort"
     type: str
     default: null
     choices: ["light", "standard", "thorough"]
-    help: "Review effort"
+    help: "Alias for --ceremony (light→light, standard→medium, thorough→comprehensive)."
   - name: "--no-structural"
     type: bool
     default: false
@@ -39,7 +44,7 @@ cli_flags:
     help: "Override follow-up for structural probes gate"
 steps:
   - step: 1
-    phase: Target Detection
+    phase: Frame
     prompt: code-review/target_detection
     variables_callable: "scripts.code_review.code_review_vars:build_variables"
     todos:
@@ -48,14 +53,14 @@ steps:
       - content: Read handoff-implement.md
         activeForm: Reading handoff
   - step: 2
-    phase: Mode Selection
+    phase: Orient — Mode
     prompt: code-review/mode_selection
     variables_callable: "scripts.code_review.code_review_vars:build_variables"
     todos:
       - content: Select review mode (pr/deep/architecture)
         activeForm: Selecting mode
   - step: 3
-    phase: Team Dispatch
+    phase: Orient — Dispatch
     prompt: code-review/diff_analysis
     variables_callable: "scripts.code_review.code_review_vars:build_variables"
     todos:
@@ -66,14 +71,14 @@ steps:
       - content: Write findings or advance when time-boxed (do not block on every subagent)
         activeForm: Recording findings
   - step: 4
-    phase: Deep Dive
+    phase: Deepen
     prompt: code-review/deep_dive
     variables_callable: "scripts.code_review.code_review_vars:build_variables"
     todos:
       - content: Dispatch Investigator for deep dive on critical findings
         activeForm: Deep-diving critical findings
   - step: 5
-    phase: Discussion
+    phase: Decide
     prompt: code-review/discussion
     variables_callable: "scripts.code_review.code_review_vars:build_variables"
     todos:
@@ -82,7 +87,7 @@ steps:
       - content: Resolve or dismiss findings
         activeForm: Resolving findings
   - step: 6
-    phase: Report
+    phase: Handoff
     prompt: code-review/report
     variables_callable: "scripts.code_review.code_review_vars:build_variables"
     todos:

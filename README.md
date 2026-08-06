@@ -28,10 +28,11 @@ This repository is the **source tree** for prompts, templates, agent briefs, and
 
 ## Overview
 
+- **One process, depth via ceremony:** Pipeline skills share Frame → … → Handoff; `--ceremony` (`light`→`comprehensive`) scales depth. Details: [`docs/ceremony.md`](docs/ceremony.md).
 - **App-first:** Cursor and Claude Code use `/forge:…`; Codex uses `$forge:…`. See [OpenAI Codex](#openai-codex).
 - **Session-safe:** Repo state lives under **`.forge/`**. Older `.codex/forge/` and `.codex/forge-codex/` trees are copied into `.forge/` on the next workflow step 1, then archived under `.forge/_archive/` (set `FORGE_KEEP_LEGACY_RUNTIME=1` to leave them in place). Stop anytime; continue with `forge takeover`, `/forge:takeover` (Cursor/Claude), or `$forge:takeover` (Codex). Each skill save also updates **`state/resume-context.json`** (schema v2: `sessions[]` + `focus`) and **`memory/forge-memory-synthesis.md`** (rollup of `project.md`, `current-step.md`, and recent handoffs). Takeover infers the next skill from sessions, handoffs, and specs.
 - **Parallel sessions:** Multiple active runs can coexist under `.forge/sessions/{id}/` with isolated state/sidecars and shared collaboration via `memory/project.md` section merges. When several sessions exist for one skill, steps 2+ need `--session <id>` (or `--state`). Archive with `forge session close <id>`. Details: [`docs/sessions.md`](docs/sessions.md).
-- **Handoffs:** On the last step, the orchestrator emits a **`handoff-multiselect`** block (for Cursor/Claude **AskQuestion** with `allow_multiple: true`) plus a text fallback. Labels use `/forge:…` (Cursor/Claude) or `$forge:…` (Codex). Reply `yes`, `1`, or pick options; see [AGENTS.md](AGENTS.md). Downstream step-1 intake consumes handoffs (read + close).
+- **Handoffs:** On the last step, the orchestrator prints a **numbered text menu** (default + alternatives + stop). Labels use `/forge:…` (Cursor/Claude) or `$forge:…` (Codex). Reply `yes`, `1`, or pick options. Agents may load `<state-dir>/handoff-multiselect.json` and use **AskQuestion** only when that tool is available — never dump raw JSON into chat; see [AGENTS.md](AGENTS.md). Downstream step-1 intake consumes handoffs (read + close).
 - **Subagent progress:** Dispatched agents write heartbeats under `.forge/state/subagent-progress/` (`templates/subagent-progress.md`); the parent relays short status while work is in flight — do not stay silent until final completion. Cursor hooks remind while agents are running (`forge cursor-subagent-hooks`).
 - **Per-skill run memory:** Every workflow run appends an auditable entry to `memory/<skill>-runs.jsonl` (for example `plan-runs.jsonl`), retaining the most recent 30 entries with timestamp, phase/step, short summary, session linkage, and handoff linkage when present.
 - **Integrations:** `forge install` and `forge uninstall` lay down Cursor, Claude, and Codex wrappers. Install output includes optional **Graphify** setup (CLI or `FORGE_GRAPHIFY_COMMAND`, `forge graphify refresh`, `install-hook` / `uninstall-hook`) for codebase context during **takeover** — see [`docs/graphify.md`](docs/graphify.md).
@@ -131,6 +132,8 @@ All **14** workflows are defined in [`integrations/spec/commands.json`](integrat
 | graphify | [Graphify](#graphify) |
 
 ### Delivery pipeline
+
+**One process, depth via ceremony:** aligned skills share the same spine (Frame → Orient → Deepen → Decide → Act → Verify → Handoff). Ceremony (`light` → `comprehensive`, CLI `--ceremony`) scales how much of that spine runs and how hard gates are — not a different product per skill. See [`docs/ceremony.md`](docs/ceremony.md) and [`templates/skill-process-spine.md`](templates/skill-process-spine.md).
 
 Default linear order (evaluate, diagnose, and ux-review also run standalone):
 
@@ -479,6 +482,14 @@ Ship finalize skill also lives at [`.cursor/skills/ship/SKILL.md`](.cursor/skill
 | **1.4** | Parallel sessions, `--session`, `forge session close`, resume-context v2 |
 | **1.6** | **ux-review** workflow; Cursor install bundles agent skills; UX audits are ux-review-only |
 | **1.7** | Subagent progress heartbeats (`.forge/state/subagent-progress/`) |
+| **1.8** | Structural build charter earlier in plan/implement; probe complexity remediation for code-review Pass B |
+| **1.9.x** | Workflow integrity (context-aware handoffs, code-review `--effort` / structural flags, session archive pointers); Windows PATH/`doctor` prefer pipx `forge`; repo/PyPI metadata → `msderganc/forge` |
+| **1.10** | Minimal-scope bias; `develop` renamed to **design** (compat shims); size-adaptive ceremony seeds |
+| **1.10.1** | Bundle skill templates beside each installed skill (relative `templates/` Reads) |
+| **1.11** | Declarative skill engine: YAML manifests + shared `skill_runner`; schema/python gates; `FORGE_SKILL_ENGINE=0` kill-switch |
+| **1.12** | Shared process spine + binding ceremony bands (`--ceremony`); dual-axis mode×ceremony; handoff AskQuestion only when the host tool exists (numbered text menu always) |
+
+*(No **1.5** release was shipped; numbering jumped 1.4 → 1.6.)*
 
 PyPI: [pypi.org/project/forge-next](https://pypi.org/project/forge-next/)
 
@@ -502,7 +513,7 @@ Outside Codex chat, hooks and automation call `forge <subcommand>` with a space 
 | **`FORGE_SKIP_STRUCTURAL_TOOLS=1`** | Skip structural probe install and runs |
 | **`FORGE_SKILL_ENGINE=0`** | Force legacy per-skill orchestrator bodies (skip declarative runner) |
 
-Full list: [`docs/environment.md`](docs/environment.md). Declarative manifests + runner: [`docs/declarative-skills.md`](docs/declarative-skills.md).
+Full list: [`docs/environment.md`](docs/environment.md). Declarative manifests + runner: [`docs/declarative-skills.md`](docs/declarative-skills.md). Process spine + ceremony: [`docs/ceremony.md`](docs/ceremony.md).
 
 **Graphify (optional):** Build the graph with `forge graphify refresh` (or `FORGE_GRAPHIFY_COMMAND`); optional `forge graphify install-hook` for post-commit refresh. Workflow `--step` may spawn **debounced background** refresh when `graphify-out/` exists; the orchestrator **GRAPHIFY** banner prints on **`forge ship --step 1`** only. Claude hooks (`forge claude-graphify`) and Codex policy (`forge codex-agents`) enforce reading the map before search. After `pipx upgrade forge-next`, re-run those two commands. Full guide: [`docs/graphify.md`](docs/graphify.md).
 
@@ -510,7 +521,7 @@ Full list: [`docs/environment.md`](docs/environment.md). Declarative manifests +
 
 ## Contributing
 
-Orchestration lives in `scripts/shared/` (`orchestrator.py`, `skill_chain.py`, `session_store.py`) and `scripts/takeover/` (meta-workflow). Keep [AGENTS.md](AGENTS.md), [`docs/README.md`](docs/README.md), and `skills/` aligned with behavior.
+Orchestration lives in `scripts/shared/` (`skill_runner.py`, `orchestrator.py`, `skill_chain.py`, `session_store.py`, `ceremony.py`) and `scripts/takeover/` (meta-workflow). Migrated skills declare phases in `skills/<skill>/manifest.yaml`; the shared spine is [`templates/skill-process-spine.md`](templates/skill-process-spine.md) (see [`docs/ceremony.md`](docs/ceremony.md)). Keep [AGENTS.md](AGENTS.md), [`docs/README.md`](docs/README.md), and `skills/` aligned with behavior. Version bump + PyPI for this release land at `/forge:ship`.
 
 **Versions:** Any change that affects the PyPI package or editor integrations must bump semver in **[`pyproject.toml`](pyproject.toml)** (and the Cursor plugin [`plugin.json`](integrations/cursor-plugin/.cursor-plugin/plugin.json) when that bundle changes). Follow **[Versioning](AGENTS.md#versioning)** in [AGENTS.md](AGENTS.md): use **patch** for narrow fixes, **minor** for additive behavior, **major** for breaking contracts.
 

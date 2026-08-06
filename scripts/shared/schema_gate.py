@@ -112,6 +112,25 @@ def is_soft_schema(schema_rel: str) -> bool:
     return schema_stem(schema_rel) in _SOFT_SCHEMA_STEMS
 
 
+def gate_is_soft(gate: ManifestGate, state: Any = None) -> bool:
+    """True when a schema gate should warn instead of hard-fail.
+
+    Soft when ``is_soft_schema(gate.schema)`` **or** the current ceremony
+    (``state.custom["ceremony"]``) is listed in ``gate.soft_when``.
+    Empty ``soft_when`` never softens via that field (deny-by-default).
+    """
+    if gate.schema and is_soft_schema(gate.schema):
+        return True
+    soft_when = getattr(gate, "soft_when", ()) or ()
+    if not soft_when or state is None:
+        return False
+    custom = getattr(state, "custom", None) or {}
+    from scripts.shared.ceremony import normalize_ceremony
+
+    ceremony = normalize_ceremony(custom.get("ceremony"))
+    return bool(ceremony and ceremony in soft_when)
+
+
 def validate_data_against_schema(
     data: Any,
     schema: dict[str, Any],
@@ -194,7 +213,7 @@ def run_schema_gate(
         if not bool(custom.get("spec_required")):
             return
 
-    soft = is_soft_schema(schema_rel)
+    soft = gate_is_soft(gate, state)
     repo_root = _repo_root_from_state(state_path)
 
     if soft:
@@ -245,6 +264,7 @@ __all__ = [
     "sidecar_filename_for_schema",
     "legacy_sidecar_filename",
     "is_soft_schema",
+    "gate_is_soft",
     "validate_data_against_schema",
     "validate_sidecar_file",
     "validate_json_shape",

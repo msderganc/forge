@@ -3,9 +3,14 @@
 from __future__ import annotations
 
 import json
+import sys
+from pathlib import Path
 from typing import Any
 
 from scripts.shared.skill_state import SkillState
+
+HANDOFF_MULTISELECT_FILENAME = "handoff-multiselect.json"
+FORGE_HANDOFF_MULTISELECT_PATH_PREFIX = "FORGE_HANDOFF_MULTISELECT_PATH="
 
 
 def resolve_next_skill(
@@ -145,6 +150,7 @@ def format_handoff_multiselect_block(
     alternatives: list[str],
     state_path: object | None = None,
 ) -> str:
+    """Fenced JSON block for tests/tooling — not for user-facing footers."""
     payload = build_handoff_multiselect_payload(
         skill_name,
         default_cmd=default_cmd,
@@ -152,11 +158,81 @@ def format_handoff_multiselect_block(
         state_path=state_path,
     )
     body = json.dumps(payload, indent=2, ensure_ascii=True)
-    return (
-        "**Agent (Cursor / Claude):** Present the block below with **AskQuestion** "
-        "(`allow_multiple: true`). Use the option labels verbatim (`/forge:…` or `$forge:…`).\n\n"
-        f"```handoff-multiselect\n{body}\n```"
+    return f"```handoff-multiselect\n{body}\n```"
+
+
+def handoff_multiselect_sidecar_path(state_path: Path | str) -> Path:
+    """``<state-dir>/handoff-multiselect.json`` beside session.json or legacy state."""
+    return Path(state_path).resolve().parent / HANDOFF_MULTISELECT_FILENAME
+
+
+def write_handoff_multiselect_sidecar(
+    state_path: Path | str,
+    payload: dict[str, Any],
+) -> Path:
+    """Write machine payload next to the state file; return the written path."""
+    path = handoff_multiselect_sidecar_path(state_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(payload, indent=2, ensure_ascii=True) + "\n",
+        encoding="utf-8",
     )
+    return path
+
+
+def locate_handoff_multiselect_sidecar(state_path: Path | str) -> Path | None:
+    """Find sidecar at the live state dir or under ``sessions/_archive`` after clear."""
+    path = Path(state_path)
+    live = handoff_multiselect_sidecar_path(path)
+    if live.is_file():
+        return live
+
+    from scripts.shared.session_store import (
+        ARCHIVE_DIRNAME,
+        SESSIONS_DIRNAME,
+        is_session_state_path,
+        session_id_from_state_path,
+        sessions_archive_root,
+    )
+
+    if not is_session_state_path(path):
+        return None
+    sid = session_id_from_state_path(path)
+    if not sid:
+        return None
+
+    # Prefer archive root derived from the original live path's sessions parent.
+    try:
+        sessions_parent = path.resolve().parent.parent
+        if sessions_parent.name == SESSIONS_DIRNAME:
+            archived = (
+                sessions_parent / ARCHIVE_DIRNAME / sid / HANDOFF_MULTISELECT_FILENAME
+            )
+            if archived.is_file():
+                return archived.resolve()
+    except OSError:
+        pass
+
+    archived = sessions_archive_root() / sid / HANDOFF_MULTISELECT_FILENAME
+    if archived.is_file():
+        return archived.resolve()
+    return None
+
+
+def emit_handoff_multiselect_path(
+    state_path: Path | str | None,
+    *,
+    path: Path | None = None,
+) -> Path | None:
+    """Print ``FORGE_HANDOFF_MULTISELECT_PATH=...`` on stderr when a sidecar exists."""
+    if path is None:
+        if state_path is None:
+            return None
+        path = locate_handoff_multiselect_sidecar(state_path)
+    if path is None or not path.is_file():
+        return None
+    print(f"{FORGE_HANDOFF_MULTISELECT_PATH_PREFIX}{path}", file=sys.stderr)
+    return path
 
 
 def format_handoff_menu_lines(
@@ -166,6 +242,7 @@ def format_handoff_menu_lines(
     alternatives: list[str],
     state_path: object | None = None,
 ) -> list[str]:
+    """User-facing numbered handoff menu (no JSON / AskQuestion dump)."""
     from scripts.shared.workflow_tokens import (
         chain_command_to_agent_invocation,
         workflow_invocation_prefix,
@@ -177,25 +254,20 @@ def format_handoff_menu_lines(
         f"WORKFLOW HANDOFF — {skill_name} complete",
         "=" * (len(skill_name) + 22),
         "",
-        format_handoff_multiselect_block(
-            skill_name,
-            default_cmd=default_cmd or None,
-            alternatives=alternatives,
-            state_path=state_path,
-        ),
-        "",
-        f"**Text fallback** (same options; prefix `{prefix}`):",
-        "",
     ]
 
     option_num = 1
     rows = _handoff_option_rows(default_cmd=default_cmd or None, alternatives=alternatives)
 
     if default_cmd:
+        lines.append(
+            f'Reply **"yes"** or **"1"** for the default, or pick numbers '
+            f"(prefix `{prefix}`):"
+        )
+        lines.append("")
         inv = chain_command_to_agent_invocation(default_cmd)
         desc = rows[0][1] if rows else ""
         desc_text = f" — {desc}" if desc else ""
-        lines.append('Reply **"yes"** or **"1"** for the default, or pick numbers:')
         lines.append(f"  {option_num}. `{inv}`{desc_text} **(default)**")
         option_num += 1
         for chain_cmd, desc, _ in rows[1:]:
@@ -205,6 +277,7 @@ def format_handoff_menu_lines(
             option_num += 1
     else:
         lines.append("**(none — workflow terminates here)**")
+        lines.append("")
         for chain_cmd, desc, _ in rows:
             inv = chain_command_to_agent_invocation(chain_cmd)
             desc_text = f" — {desc}" if desc else ""

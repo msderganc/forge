@@ -53,6 +53,9 @@ class ManifestGate:
     schema: str | None = None
     callable: str | None = None
     override_key: str | None = None
+    # Ceremony bands that soften this gate. Empty = never soft via this field
+    # (deny-by-default). Softness is orthogonal to mode variants.
+    soft_when: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -131,6 +134,30 @@ def _parse_cli_flag(raw: dict[str, Any]) -> CliFlag:
     )
 
 
+def _parse_soft_when(raw: Any, *, gate_id: str) -> tuple[str, ...]:
+    """Parse optional soft_when list; unknown bands raise SkillManifestError."""
+    if raw is None:
+        return ()
+    if not isinstance(raw, list):
+        raise SkillManifestError(
+            f"gate {gate_id!r} soft_when must be a list of ceremony band names"
+        )
+    # Import locally to keep ceremony as the single source of band names.
+    from scripts.shared.ceremony import CEREMONIES
+
+    allowed = set(CEREMONIES)
+    bands: list[str] = []
+    for item in raw:
+        name = str(item).strip().lower()
+        if name not in allowed:
+            raise SkillManifestError(
+                f"gate {gate_id!r} soft_when has unknown ceremony band {item!r}; "
+                f"allowed: {list(CEREMONIES)}"
+            )
+        bands.append(name)
+    return tuple(bands)
+
+
 def _parse_gate(raw: dict[str, Any]) -> ManifestGate:
     if not isinstance(raw, dict):
         raise SkillManifestError("gate entries must be mappings")
@@ -145,8 +172,9 @@ def _parse_gate(raw: dict[str, Any]) -> ManifestGate:
     gate_id = raw.get("id")
     if not gate_id:
         raise SkillManifestError("gate entries require id")
+    gate_id_s = str(gate_id)
     return ManifestGate(
-        id=str(gate_id),
+        id=gate_id_s,
         steps=tuple(int(s) for s in steps_raw),
         kind=kind,
         schema=str(raw["schema"]) if raw.get("schema") is not None else None,
@@ -154,6 +182,7 @@ def _parse_gate(raw: dict[str, Any]) -> ManifestGate:
         override_key=(
             str(raw["override_key"]) if raw.get("override_key") is not None else None
         ),
+        soft_when=_parse_soft_when(raw.get("soft_when"), gate_id=gate_id_s),
     )
 
 

@@ -15,11 +15,16 @@ cli_flags:
     type: bool
     default: false
     help: "Enable team dispatch in pre/post modes"
+  - name: "--ceremony"
+    type: str
+    default: null
+    choices: ["light", "medium", "detailed", "comprehensive"]
+    help: "Ceremony band (process depth). Overrides estimate; orthogonal to --mode."
   - name: "--effort"
     type: str
     default: null
     choices: ["small", "medium", "large", "lite", "light", "standard", "thorough"]
-    help: "Override size/ceremony tier (small skips heavy phases)."
+    help: "Alias for --ceremony (maps small/lite/light→light, medium/standard→medium, large/thorough→detailed|comprehensive)."
 steps: []
 variants:
   pre:
@@ -36,7 +41,7 @@ variants:
         callable: "scripts.evaluate.evaluate_vars:ingest_findings_gate"
     steps:
       - step: 1
-        phase: Plan Parsing
+        phase: Frame — Plan Parsing
         prompt: shared/plan_parsing
         variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
         todos:
@@ -45,42 +50,42 @@ variants:
           - content: Detect pre vs post implementation mode
             activeForm: Detecting mode
       - step: 2
-        phase: Feasibility
+        phase: Orient — Feasibility
         prompt: pre/feasibility
         variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
         todos:
           - content: Assess feasibility of each plan step
             activeForm: Assessing feasibility
       - step: 3
-        phase: Completeness
+        phase: Orient — Completeness
         prompt: pre/completeness
         variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
         todos:
           - content: Check plan completeness (error handling, edge cases, tests)
             activeForm: Checking completeness
       - step: 4
-        phase: Codebase Alignment
+        phase: Deepen — Codebase Alignment
         prompt: pre/codebase_alignment
         variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
         todos:
           - content: Check plan against existing code patterns and conventions
             activeForm: Checking codebase alignment
       - step: 5
-        phase: Risk & Dependencies
+        phase: Deepen — Risk
         prompt: pre/risk_dependencies
         variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
         todos:
           - content: Analyze dependencies, risks, rollback strategies, and failure modes
             activeForm: Analyzing risks and dependencies
       - step: 6
-        phase: Discussion
+        phase: Decide
         prompt: shared/discussion
         variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
         todos:
           - content: Present findings to user for triage
             activeForm: Running triage with user
       - step: 7
-        phase: Report
+        phase: Handoff
         prompt: report
         variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
         todos:
@@ -99,56 +104,56 @@ variants:
         callable: "scripts.evaluate.evaluate_vars:ingest_findings_gate"
     steps:
       - step: 1
-        phase: Plan Parsing
+        phase: Frame — Plan Parsing
         prompt: shared/plan_parsing
         variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
         todos:
           - content: Parse plan and extract file references
             activeForm: Parsing plan
       - step: 2
-        phase: Completeness Audit
+        phase: Orient — Completeness Audit
         prompt: post/completeness_audit
         variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
         todos:
           - content: Audit completeness (what was implemented vs planned)
             activeForm: Auditing completeness
       - step: 3
-        phase: Correctness
+        phase: Deepen — Correctness
         prompt: post/correctness
         variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
         todos:
           - content: Verify correctness of implementation
             activeForm: Verifying correctness
       - step: 4
-        phase: Code Quality
+        phase: Deepen — Code Quality
         prompt: post/code_quality
         variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
         todos:
           - content: Assess code quality
             activeForm: Assessing code quality
       - step: 5
-        phase: Performance
+        phase: Deepen — Performance
         prompt: post/performance
         variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
         todos:
           - content: Assess performance implications
             activeForm: Assessing performance
       - step: 6
-        phase: Operational Readiness
+        phase: Verify — Operational
         prompt: post/operational_readiness
         variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
         todos:
           - content: Assess operational readiness
             activeForm: Assessing operational readiness
       - step: 7
-        phase: Discussion
+        phase: Decide
         prompt: shared/discussion
         variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
         todos:
           - content: Present findings to user for triage
             activeForm: Running triage with user
       - step: 8
-        phase: Report
+        phase: Handoff
         prompt: report
         variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
         todos:
@@ -167,35 +172,35 @@ variants:
         callable: "scripts.evaluate.evaluate_vars:ingest_findings_gate"
     steps:
       - step: 1
-        phase: Team Dispatch
+        phase: Orient — Team
         prompt: review/team_dispatch
         variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
         todos:
           - content: Dispatch full review team in parallel
             activeForm: Dispatching review team
       - step: 2
-        phase: Findings Aggregation
+        phase: Deepen — Findings
         prompt: review/findings_aggregation
         variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
         todos:
           - content: Aggregate findings from all reviewers
             activeForm: Aggregating findings
       - step: 3
-        phase: Remediation
+        phase: Act — Remediation
         prompt: review/remediation
         variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
         todos:
           - content: Run remediation review loop
             activeForm: Running remediation
       - step: 4
-        phase: Discussion
+        phase: Decide
         prompt: shared/discussion
         variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
         todos:
           - content: Present findings to user for triage
             activeForm: Running triage with user
       - step: 5
-        phase: Report
+        phase: Handoff
         prompt: report
         variables_callable: "scripts.evaluate.evaluate_vars:build_variables"
         todos:

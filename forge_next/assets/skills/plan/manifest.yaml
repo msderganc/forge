@@ -11,13 +11,18 @@ cli_flags:
     default: null
     choices: ["default", "lite"]
     help: "Plan mode: default (full governance) or lite (concise, same task rigor)."
+  - name: "--ceremony"
+    type: str
+    default: null
+    choices: ["light", "medium", "detailed", "comprehensive"]
+    help: "Ceremony band (process depth). Overrides estimate; orthogonal to --mode."
   - name: "--save-mode-preference"
     type: bool
     default: false
     help: "When used with --mode, persist that mode as the default for future plan sessions."
 steps:
   - step: 1
-    phase: Context Detection
+    phase: Frame
     prompt: plan/context
     variables_callable: "scripts.plan.plan_vars:build_variables"
     todos:
@@ -26,7 +31,7 @@ steps:
       - content: Initialize plan state
         activeForm: Initializing state
   - step: 2
-    phase: Architecture Dispatch
+    phase: Orient — Architecture
     prompt: plan/architecture
     variables_callable: "scripts.plan.plan_vars:build_variables"
     todos:
@@ -35,7 +40,7 @@ steps:
       - content: Wait for architecture artifacts
         activeForm: Waiting for architecture
   - step: 3
-    phase: Plan Creation Dispatch
+    phase: Deepen — Plan Creation
     prompt: plan/creation
     variables_callable: "scripts.plan.plan_vars:build_variables"
     todos:
@@ -44,7 +49,7 @@ steps:
       - content: Validate each task against INVEST criteria
         activeForm: Validating INVEST
   - step: 4
-    phase: Plan Review Loop
+    phase: Deepen — Review
     prompt: plan/review_loop
     variables_callable: "scripts.plan.plan_vars:build_variables"
     todos:
@@ -53,7 +58,7 @@ steps:
       - content: Record and resolve findings
         activeForm: Resolving findings
   - step: 5
-    phase: User Approval
+    phase: Decide
     prompt: plan/approval
     variables_callable: "scripts.plan.plan_vars:build_variables"
     todos:
@@ -62,7 +67,7 @@ steps:
       - content: Present plan to user for approval
         activeForm: Presenting plan for approval
   - step: 6
-    phase: Documentation Planning
+    phase: Verify — Documentation
     prompt: plan/documentation
     variables_callable: "scripts.plan.plan_vars:build_variables"
     todos:
@@ -80,10 +85,12 @@ steps:
       - content: Render dashboard and complete
         activeForm: Rendering dashboard
 gates:
+  # Soften probe injection at light; plan_skeleton integrity stays hard.
   - id: architecture_probes
     steps: [2]
     kind: python
     callable: "scripts.plan.plan_vars:maybe_inject_architecture_probes"
+    soft_when: ["light"]
   - id: plan_skeleton
     steps: [7]
     kind: python
