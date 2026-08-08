@@ -16,8 +16,11 @@ graphify-out/
 # Local PyPI extract trees (not the live forge_next/ package)
 forge_next-0.14.*/
 
-# Local Cursor hooks (forge cursor-subagent-hooks writes; not repo config)
+# Local IDE / agent settings (not product; ship skill stays tracked under .cursor/skills/)
+.claude/
 .cursor/hooks.json
+.cursor/rules/
+pyrightconfig.json
 
 # Skylos CLI local cache / scan output
 .skylos/

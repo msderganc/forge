@@ -1,4 +1,0 @@
-{
-  "_forge_graphify": "forge-graphify-hooks (managed by forge-next; re-run forge claude-graphify)",
-  "_note": "Hook commands are written by `forge claude-graphify` using the absolute pipx `forge` path on your machine — do not hand-edit to use /usr/bin/python."
-}
