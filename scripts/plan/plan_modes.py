@@ -143,28 +143,40 @@ def format_mode_selection_block(
     persisted: str | None,
     resolved_mode: str | None,
     resolution_source: str,
+    ceremony: str | None = None,
+    ceremony_source: str | None = None,
 ) -> str:
     """Markdown block for step-1 prompts when ceremony/mode must be confirmed."""
-    from scripts.shared.ceremony import map_from_plan_mode
+    from scripts.shared.ceremony import map_from_plan_mode, normalize_ceremony
 
-    recommended_ceremony = map_from_plan_mode(recommended) or "light"
+    active_ceremony = normalize_ceremony(ceremony)
+    src = (ceremony_source or "").strip().lower()
+
+    # CLI --ceremony wins: never re-ask; show the real band (not plan_mode alias).
+    if src == "cli" and active_ceremony:
+        return (
+            "## Ceremony\n\n"
+            f"**Active:** `{active_ceremony}` (from CLI — no confirmation needed).\n"
+        )
+
     if resolution_source == "cli":
         active = resolved_mode or recommended
-        ceremony = map_from_plan_mode(active) or active
+        shown = active_ceremony or map_from_plan_mode(active) or active
         return (
-            f"## Ceremony\n\n"
-            f"**Active:** `{ceremony}` (from CLI — no confirmation needed).\n"
+            "## Ceremony\n\n"
+            f"**Active:** `{shown}` (from CLI — no confirmation needed).\n"
         )
 
     if resolution_source == "session":
-        if resolved_mode:
-            ceremony = map_from_plan_mode(resolved_mode) or resolved_mode
+        if resolved_mode or active_ceremony:
+            shown = active_ceremony or map_from_plan_mode(resolved_mode) or resolved_mode
             return (
-                f"## Ceremony\n\n"
-                f"**Active:** `{ceremony}` (resumed session — unchanged).\n"
+                "## Ceremony\n\n"
+                f"**Active:** `{shown}` (resumed session — unchanged).\n"
             )
         return ""
 
+    recommended_ceremony = map_from_plan_mode(recommended) or "light"
     persisted_ceremony = map_from_plan_mode(persisted) if persisted else None
     persisted_line = (
         f"Saved preference: `{persisted_ceremony}` (hint only until you confirm).\n"

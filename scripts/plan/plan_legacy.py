@@ -417,22 +417,34 @@ def handle_step_1(args: argparse.Namespace) -> None:
     state.custom["plan_file"] = plan_file
 
     cli_mode = getattr(args, "mode", None)
+    cli_ceremony = getattr(args, "ceremony", None)
     persisted = load_persisted_preference()
     recommended, rec_rationale = recommend_mode(handoff_content)
 
-    plan_mode, resolution_source = resolve_mode_for_step1(
-        cli_mode,
-        resumed_session=False,
-        stored_mode=prior_mode,
-    )
-    if resolution_source == "fallback":
-        resolution_source = "prompt"
+    from scripts.shared.ceremony import map_to_plan_mode, normalize_ceremony
+
+    ceremony = normalize_ceremony(str(cli_ceremony) if cli_ceremony else None)
+    ceremony_source = "cli" if ceremony else ""
+    if ceremony:
+        state.custom["ceremony"] = ceremony
+        state.custom["ceremony_source"] = "cli"
+        state.custom["ceremony_rationale"] = "CLI --ceremony"
+        plan_mode = map_to_plan_mode(ceremony)
+        resolution_source = "cli"
+    else:
+        plan_mode, resolution_source = resolve_mode_for_step1(
+            cli_mode,
+            resumed_session=False,
+            stored_mode=prior_mode,
+        )
+        if resolution_source == "fallback":
+            resolution_source = "prompt"
 
     state.custom["plan_mode"] = plan_mode
     state.custom["plan_mode_recommended"] = recommended
     state.custom["plan_mode_recommendation_rationale"] = rec_rationale
     state.custom["plan_mode_resolution"] = resolution_source
-    if getattr(args, "save_mode_preference", False) and cli_mode:
+    if getattr(args, "save_mode_preference", False) and (cli_mode or ceremony):
         save_persisted_preference(plan_mode)
         state.custom["plan_mode_preference_saved"] = plan_mode
 
@@ -450,6 +462,8 @@ def handle_step_1(args: argparse.Namespace) -> None:
         persisted=persisted,
         resolved_mode=plan_mode if resolution_source in ("cli", "session") else None,
         resolution_source=resolution_source,
+        ceremony=ceremony,
+        ceremony_source=ceremony_source or None,
     )
 
     # Mark step 1 complete

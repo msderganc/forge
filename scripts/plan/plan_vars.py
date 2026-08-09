@@ -52,15 +52,34 @@ def ensure_plan_initialized(
     force = bool(state.custom.get("force"))
     write_plan_skeleton(Path(plan_file), force=force)
 
+    from scripts.shared.ceremony import map_to_plan_mode, normalize_ceremony
+
     cli_mode = state.custom.get("mode")
-    recommended, rec_rationale = recommend_mode(handoff_content)
-    plan_mode, resolution_source = resolve_mode_for_step1(
-        cli_mode,
-        resumed_session=False,
-        stored_mode=None,
+    # Plan's --mode flag is narrative depth (lite/default), not an evaluate variant.
+    if cli_mode not in ("lite", "default"):
+        cli_mode = None
+    ceremony = normalize_ceremony(
+        str(state.custom.get("ceremony"))
+        if state.custom.get("ceremony") is not None
+        else None
     )
-    if resolution_source == "fallback":
-        resolution_source = "prompt"
+    ceremony_source = str(state.custom.get("ceremony_source") or "")
+
+    recommended, rec_rationale = recommend_mode(handoff_content)
+    if ceremony_source == "cli" and ceremony:
+        plan_mode = map_to_plan_mode(ceremony)
+        resolution_source = "cli"
+    else:
+        plan_mode, resolution_source = resolve_mode_for_step1(
+            cli_mode,
+            resumed_session=False,
+            stored_mode=None,
+        )
+        if resolution_source == "fallback":
+            resolution_source = "prompt"
+        # Keep plan_mode and ceremony aligned when ceremony already estimated.
+        if ceremony and ceremony_source in ("estimated", "inherited", "escalated"):
+            plan_mode = map_to_plan_mode(ceremony)
 
     state.custom["handoff_content"] = handoff_content
     state.custom["plan_file"] = plan_file
@@ -68,7 +87,9 @@ def ensure_plan_initialized(
     state.custom["plan_mode_recommended"] = recommended
     state.custom["plan_mode_recommendation_rationale"] = rec_rationale
     state.custom["plan_mode_resolution"] = resolution_source
-    if state.custom.get("save_mode_preference") and cli_mode:
+    if state.custom.get("save_mode_preference") and (
+        cli_mode or ceremony_source == "cli"
+    ):
         save_persisted_preference(plan_mode)
         state.custom["plan_mode_preference_saved"] = plan_mode
 
@@ -80,6 +101,8 @@ def ensure_plan_initialized(
         persisted=persisted,
         resolved_mode=plan_mode if resolution_source in ("cli", "session") else None,
         resolution_source=resolution_source,
+        ceremony=ceremony,
+        ceremony_source=ceremony_source or None,
     )
     if state_path is not None:
         save_state(state, state_path)

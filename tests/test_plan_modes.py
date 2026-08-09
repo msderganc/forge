@@ -85,6 +85,21 @@ def test_mode_selection_block_cli():
     assert "light" in block
 
 
+def test_mode_selection_block_ceremony_cli_skips_prompt():
+    block = format_mode_selection_block(
+        recommended="lite",
+        rationale="small scope",
+        persisted=None,
+        resolved_mode=None,
+        resolution_source="prompt",
+        ceremony="comprehensive",
+        ceremony_source="cli",
+    )
+    assert "Ceremony selection" not in block
+    assert "**Active:** `comprehensive`" in block
+    assert "no confirmation needed" in block
+
+
 def test_mode_selection_block_prompt():
     block = format_mode_selection_block(
         recommended="lite",
@@ -100,3 +115,41 @@ def test_mode_selection_block_prompt():
     assert "comprehensive" in block
     assert "Do **not** offer only" in block
     assert "legacy `lite`" in block
+
+
+def test_ensure_plan_initialized_syncs_plan_mode_from_ceremony_cli(tmp_path, monkeypatch):
+    from scripts.plan import plan_vars
+    from scripts.shared.orchestrator import SkillState
+
+    monkeypatch.setattr(plan_vars, "consume_handoff", lambda _s: "")
+    monkeypatch.setattr(plan_vars, "runtime_memory_dir", lambda _r: tmp_path)
+    monkeypatch.setattr(plan_vars, "write_plan_skeleton", lambda *_a, **_k: None)
+    monkeypatch.setattr(plan_vars, "generate_plan_filename", lambda _h: "x.md")
+    monkeypatch.setattr(plan_vars, "save_state", lambda *_a, **_k: None)
+
+    state = SkillState(skill_name="plan", max_step=7)
+    state.custom["ceremony"] = "medium"
+    state.custom["ceremony_source"] = "cli"
+    plan_vars.ensure_plan_initialized(state, tmp_path, state_path=tmp_path / "s.json")
+    assert state.custom["plan_mode"] == "default"
+    assert state.custom["plan_mode_resolution"] == "cli"
+    assert "Ceremony selection" not in state.custom["_mode_selection_block"]
+    assert "`medium`" in state.custom["_mode_selection_block"]
+
+
+def test_ensure_plan_initialized_ceremony_light_maps_to_lite(tmp_path, monkeypatch):
+    from scripts.plan import plan_vars
+    from scripts.shared.orchestrator import SkillState
+
+    monkeypatch.setattr(plan_vars, "consume_handoff", lambda _s: "")
+    monkeypatch.setattr(plan_vars, "runtime_memory_dir", lambda _r: tmp_path)
+    monkeypatch.setattr(plan_vars, "write_plan_skeleton", lambda *_a, **_k: None)
+    monkeypatch.setattr(plan_vars, "generate_plan_filename", lambda _h: "x.md")
+    monkeypatch.setattr(plan_vars, "save_state", lambda *_a, **_k: None)
+
+    state = SkillState(skill_name="plan", max_step=7)
+    state.custom["ceremony"] = "light"
+    state.custom["ceremony_source"] = "cli"
+    plan_vars.ensure_plan_initialized(state, tmp_path, state_path=tmp_path / "s.json")
+    assert state.custom["plan_mode"] == "lite"
+    assert "**Active:** `light`" in state.custom["_mode_selection_block"]

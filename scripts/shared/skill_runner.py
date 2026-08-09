@@ -163,6 +163,17 @@ def run_skill(skill: str, argv: list[str], *, repo_root: Path | None = None) -> 
         state.custom.pop("ceremony_source", None)
         state.custom.pop("ceremony_rationale", None)
         resolve_and_persist_ceremony(state, args, step=1)
+        # Plan narrative mode must track the refreshed ceremony band.
+        if skill == "plan":
+            band = normalize_ceremony(
+                str(state.custom.get("ceremony"))
+                if state.custom.get("ceremony") is not None
+                else None
+            )
+            if band:
+                from scripts.shared.ceremony import map_to_plan_mode
+
+                state.custom["plan_mode"] = map_to_plan_mode(band)
         save_state(state, state_path)
     append_body = str(variables.pop("__APPEND__", "") or "")
     phase_label = str(variables.pop("__PHASE_LABEL__", "") or "") or step_spec.phase

@@ -135,9 +135,18 @@ PROMPT_MARKERS: dict[str, dict[int, list[str]]] = {
         7: ["report", "prevention"],
     },
     "plan:ceremony-light": {
-        1: ["plan", "frame"],
+        1: ["ceremony", "active", "light", "no confirmation"],
         2: ["architect", "orient"],
     },
+    "plan:ceremony-cli-comprehensive": {
+        1: ["ceremony", "active", "comprehensive", "no confirmation"],
+    },
+}
+
+# Substrings that must NOT appear (case-insensitive) for a skill/step.
+FORBIDDEN_MARKERS: dict[str, dict[int, list[str]]] = {
+    "plan:ceremony-light": {1: ["ceremony selection (required)"]},
+    "plan:ceremony-cli-comprehensive": {1: ["ceremony selection (required)"]},
 }
 
 
@@ -388,6 +397,17 @@ def _check_output(skill_key: str, step: int, stdout: str, stderr: str, code: int
             f"none of markers {markers!r} found",
             len(stdout),
         )
+    forbidden = (FORBIDDEN_MARKERS.get(skill_key) or {}).get(step) or []
+    hit_forbidden = [m for m in forbidden if m.lower() in low]
+    if hit_forbidden:
+        return StepResult(
+            skill_key,
+            step,
+            False,
+            code,
+            f"forbidden markers present: {hit_forbidden!r}",
+            len(stdout),
+        )
     detail = "ok (soft gate)" if soft_gate else "ok"
     return StepResult(skill_key, step, True, code, detail, len(stdout))
 
@@ -633,10 +653,79 @@ def _prepare_plan(step: int, state_path: Path) -> None:
         _inject_plan_markers_cleared(state_path)
 
 
+def _check_forge_cli_ceremony_flags() -> SkillResult:
+    """Outer `forge` CLI must expose --ceremony for aligned skills (not script-only)."""
+    from forge_next.cli import build_parser
+
+    result = SkillResult(skill="forge-cli-ceremony")
+    parser = build_parser()
+    expect_yes = (
+        "evaluate",
+        "design",
+        "develop",
+        "plan",
+        "implement",
+        "code-review",
+        "test",
+        "diagnose",
+    )
+    expect_no = ("sketch", "ship", "ux-review", "takeover")
+    choices = {}
+    for action in parser._actions:
+        if getattr(action, "dest", None) == "command":
+            choices = getattr(action, "choices", None) or {}
+            break
+    for name in expect_yes:
+        sub = choices.get(name)
+        ok = False
+        detail = "missing subparser"
+        if sub is not None:
+            option_strings = {
+                opt
+                for act in sub._actions
+                for opt in (getattr(act, "option_strings", None) or [])
+            }
+            ok = "--ceremony" in option_strings
+            detail = "has --ceremony" if ok else "MISSING --ceremony on forge CLI"
+        result.steps.append(
+            StepResult("forge-cli-ceremony", 0, ok, 0 if ok else 1, f"{name}: {detail}", 0)
+        )
+    for name in expect_no:
+        sub = choices.get(name)
+        ok = True
+        detail = "no --ceremony (expected)"
+        if sub is not None:
+            option_strings = {
+                opt
+                for act in sub._actions
+                for opt in (getattr(act, "option_strings", None) or [])
+            }
+            if "--ceremony" in option_strings:
+                ok = False
+                detail = "unexpected --ceremony"
+        result.steps.append(
+            StepResult("forge-cli-ceremony", 0, ok, 0 if ok else 1, f"{name}: {detail}", 0)
+        )
+    return result
+
+
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     label_base = "e2e-prompt-walk"
     results: list[SkillResult] = []
+
+    print("E2E skill prompt walk")
+    print("=" * 60)
+    print(f"Artifacts: {OUT}")
+    print()
+
+    print("--- forge-cli-ceremony (outer CLI contract) ---")
+    cli_res = _check_forge_cli_ceremony_flags()
+    results.append(cli_res)
+    for s in cli_res.steps:
+        mark = "PASS" if s.ok else "FAIL"
+        print(f"  [{mark}] {s.detail}")
+    print()
 
     plan_file = REPO / ".forge/memory/plans/20260730-1520-plan.md"
     if not plan_file.is_file():
@@ -678,17 +767,19 @@ def main() -> int:
         (
             "plan",
             2,
-            ["--mode", "lite", "--force", "--ceremony", "light"],
+            ["--force", "--ceremony", "light"],
             "plan:ceremony-light",
+            None,
+        ),
+        (
+            "plan",
+            1,
+            ["--force", "--ceremony", "comprehensive"],
+            "plan:ceremony-cli-comprehensive",
             None,
         ),
         ("diagnose", 7, [], None, _prepare_diagnose),
     ]
-
-    print("E2E skill prompt walk")
-    print("=" * 60)
-    print(f"Artifacts: {OUT}")
-    print()
 
     for skill, max_step, extra, skill_key, before in walk_specs:
         key = skill_key or skill
