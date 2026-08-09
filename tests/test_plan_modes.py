@@ -82,7 +82,7 @@ def test_mode_selection_block_cli():
         resolution_source="cli",
     )
     assert "no confirmation needed" in block
-    assert "lite" in block
+    assert "light" in block
 
 
 def test_mode_selection_block_prompt():
@@ -93,6 +93,10 @@ def test_mode_selection_block_prompt():
         resolved_mode=None,
         resolution_source="prompt",
     )
-    assert "Plan mode selection" in block
-    assert "default" in block
-    assert "lite" in block
+    assert "Ceremony selection" in block
+    assert "light" in block
+    assert "medium" in block
+    assert "detailed" in block
+    assert "comprehensive" in block
+    assert "Do **not** offer only" in block
+    assert "legacy `lite`" in block

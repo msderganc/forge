@@ -7,7 +7,13 @@ from types import SimpleNamespace
 from forge_next.cli_dispatch import _passthrough_argv
 
 
-def test_passthrough_includes_takeover_issue_and_design() -> None:
+def test_passthrough_includes_ceremony() -> None:
+    args = SimpleNamespace(ceremony="medium", mode="lite", step=1)
+    out = _passthrough_argv(args)
+    assert out[out.index("--ceremony") + 1] == "medium"
+    assert out[out.index("--mode") + 1] == "lite"
+    assert out[out.index("--step") + 1] == "1"
+
     args = SimpleNamespace(
         step=1,
         issue="42",

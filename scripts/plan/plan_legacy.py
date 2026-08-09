@@ -688,8 +688,13 @@ def main():
         "--mode",
         choices=["default", "lite"],
         default=None,
-        help="Plan mode: default (full governance) or lite (concise, same task rigor). "
-        "If omitted on a new session, the agent must confirm mode with the user.",
+        help="Legacy plan narrative depth (maps into ceremony). Prefer --ceremony.",
+    )
+    parser.add_argument(
+        "--ceremony",
+        choices=["light", "medium", "detailed", "comprehensive"],
+        default=None,
+        help="Process depth band (overrides estimate).",
     )
     parser.add_argument(
         "--save-mode-preference",

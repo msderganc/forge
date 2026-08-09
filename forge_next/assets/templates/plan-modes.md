@@ -4,14 +4,24 @@ Used by `forge plan`, planner/architect agents, and `templates/writing-plans.md`
 
 See also `templates/scope-size-model.md`.
 
-## Modes
+## Modes (legacy) and ceremony
+
+User-facing depth is **`--ceremony`**: `light` | `medium` | `detailed` | `comprehensive`
+(see `docs/ceremony.md`). Plan still stores an internal `plan_mode` for templates:
+
+| Ceremony | Internal `plan_mode` |
+|----------|----------------------|
+| `light` | `lite` |
+| `medium` / `detailed` / `comprehensive` | `default` |
+
+Legacy CLI `--mode {default,lite}` still works and maps into ceremony.
 
 | Mode | Best for | Ceremony |
 |------|----------|----------|
 | `lite` | **Preferred starting point** for small/uncertain/trivial work | Concise sections, same task rigor |
 | `default` | Multi-module features, moderate/high risk, handoff-heavy work | Full governance sections |
 
-Use **`default`** only when multi-module / higher-risk signals clearly fire. When unsure, prefer **`lite`**.
+Use **`light`** (or legacy `lite`) when unsure. Escalate only with clear risk.
 
 ## Shared invariants (non-negotiable)
 

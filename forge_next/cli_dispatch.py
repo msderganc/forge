@@ -224,6 +224,7 @@ def _passthrough_argv(args: Any) -> list[str]:
     _add_flag(passthrough, "--label", getattr(args, "label", None))
     _add_flag(passthrough, "--parallel", getattr(args, "parallel", None))
     _add_flag(passthrough, "--mode", getattr(args, "mode", None))
+    _add_flag(passthrough, "--ceremony", getattr(args, "ceremony", None))
     _add_flag(passthrough, "--base-url", getattr(args, "base_url", None))
     _add_flag(passthrough, "--save-mode-preference", getattr(args, "save_mode_preference", None))
     _add_flag(passthrough, "--team", getattr(args, "team", None))

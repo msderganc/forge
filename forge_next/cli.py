@@ -50,6 +50,14 @@ def build_parser() -> argparse.ArgumentParser:
             help="Named workflow phase (optional when resuming with --session or --state)",
         )
 
+    def add_ceremony_flag(sp: argparse.ArgumentParser) -> None:
+        sp.add_argument(
+            "--ceremony",
+            choices=["light", "medium", "detailed", "comprehensive"],
+            default=None,
+            help="Process depth band (overrides estimate). Prefer this over legacy lite/default/--effort.",
+        )
+
     # evaluate
     ev = sub.add_parser("evaluate", help="Run the evaluate orchestrator")
     add_common_repo_flag(ev)
@@ -60,6 +68,7 @@ def build_parser() -> argparse.ArgumentParser:
     ev.add_argument("--state", type=str)
     ev.add_argument("--mode", choices=["pre", "post", "review"])
     ev.add_argument("--team", action="store_true")
+    add_ceremony_flag(ev)
     ev.add_argument(
         "--quick",
         action="store_true",
@@ -98,6 +107,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_workflow_phase_flags(dn)
     dn.add_argument("--state", type=str)
     dn.add_argument("--quick", action="store_true")
+    add_ceremony_flag(dn)
     dn.add_argument("--auto1", action="store_true")
     dn.add_argument("--auto2", action="store_true")
     dn.add_argument("--auto3", action="store_true")
@@ -126,6 +136,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_workflow_phase_flags(dv)
     dv.add_argument("--state", type=str)
     dv.add_argument("--quick", action="store_true")
+    add_ceremony_flag(dv)
     dv.add_argument("--auto1", action="store_true")
     dv.add_argument("--auto2", action="store_true")
     dv.add_argument("--auto3", action="store_true")
@@ -146,12 +157,13 @@ def build_parser() -> argparse.ArgumentParser:
     add_workflow_phase_flags(pl)
     pl.add_argument("--state", type=str)
     pl.add_argument("--quick", action="store_true")
+    add_ceremony_flag(pl)
     pl.add_argument("--force", action="store_true")
     pl.add_argument(
         "--mode",
         choices=["default", "lite"],
         default=None,
-        help="Plan mode: default (full governance) or lite (concise, same task rigor)",
+        help="Legacy plan narrative depth (maps into ceremony). Prefer --ceremony.",
     )
     pl.add_argument(
         "--save-mode-preference",
@@ -167,6 +179,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_workflow_phase_flags(im)
     im.add_argument("--state", type=str)
     im.add_argument("--quick", action="store_true")
+    add_ceremony_flag(im)
     im.add_argument("--plan", type=str, default=None, help="Path to plan file (implement step 1)")
     im.add_argument(
         "--branch-prefix",
@@ -193,12 +206,13 @@ def build_parser() -> argparse.ArgumentParser:
     add_workflow_phase_flags(cr)
     cr.add_argument("--state", type=str)
     cr.add_argument("--quick", action="store_true")
+    add_ceremony_flag(cr)
     cr.add_argument(
         "--effort",
         type=str,
         choices=["light", "standard", "thorough"],
         default=None,
-        help="Review effort (replaces --quick). light=Architect+QA; thorough enables structural by default",
+        help="Review effort alias for --ceremony (light→light, standard→medium, thorough→comprehensive)",
     )
     cr_struct = cr.add_mutually_exclusive_group()
     cr_struct.add_argument(
@@ -246,6 +260,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_workflow_phase_flags(ts)
     ts.add_argument("--state", type=str)
     ts.add_argument("--quick", action="store_true")
+    add_ceremony_flag(ts)
     ts.add_argument("--mode", choices=["run", "flows", "ux"],
                     help="run|flows; 'ux' exits with redirect to forge ux-review")
     ts.add_argument(
@@ -281,6 +296,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_workflow_phase_flags(dg)
     dg.add_argument("--state", type=str)
     dg.add_argument("--quick", action="store_true")
+    add_ceremony_flag(dg)
 
     # takeover (meta-workflow — replaces resume + iterate)
     to = sub.add_parser(

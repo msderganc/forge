@@ -466,6 +466,7 @@ After `forge install --cursor`, the plugin under `~/.cursor/plugins/local/forge/
 | **1.10.1** | Bundled skill templates beside each installed skill |
 | **1.11** | Declarative skill engine: YAML manifests + shared `skill_runner`; schema/python gates; `FORGE_SKILL_ENGINE=0` kill-switch |
 | **1.12** | Shared process spine with binding ceremony bands; dual-axis mode × ceremony; handoff AskQuestion only when the host tool exists |
+| **1.12.1** | Expose `--ceremony` on the `forge` CLI and ask plan for light/medium/detailed/comprehensive (not legacy normal/lite) |
 
 *(There was no 1.5 release — numbering jumped 1.4 to 1.6.)*
 

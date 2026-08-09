@@ -144,43 +144,52 @@ def format_mode_selection_block(
     resolved_mode: str | None,
     resolution_source: str,
 ) -> str:
-    """Markdown block for step-1 prompts when mode must be confirmed."""
+    """Markdown block for step-1 prompts when ceremony/mode must be confirmed."""
+    from scripts.shared.ceremony import map_from_plan_mode
+
+    recommended_ceremony = map_from_plan_mode(recommended) or "light"
     if resolution_source == "cli":
+        active = resolved_mode or recommended
+        ceremony = map_from_plan_mode(active) or active
         return (
-            f"## Plan mode\n\n"
-            f"**Active mode:** `{resolved_mode}` (from CLI — no confirmation needed).\n"
+            f"## Ceremony\n\n"
+            f"**Active:** `{ceremony}` (from CLI — no confirmation needed).\n"
         )
 
     if resolution_source == "session":
-        note = ""
         if resolved_mode:
+            ceremony = map_from_plan_mode(resolved_mode) or resolved_mode
             return (
-                f"## Plan mode\n\n"
-                f"**Active mode:** `{resolved_mode}` (resumed session — unchanged).\n"
+                f"## Ceremony\n\n"
+                f"**Active:** `{ceremony}` (resumed session — unchanged).\n"
             )
-        return note
+        return ""
 
+    persisted_ceremony = map_from_plan_mode(persisted) if persisted else None
     persisted_line = (
-        f"Saved preference: `{persisted}` (used as recommendation hint only until you confirm).\n"
-        if persisted
-        else "No saved plan-mode preference yet.\n"
+        f"Saved preference: `{persisted_ceremony}` (hint only until you confirm).\n"
+        if persisted_ceremony
+        else "No saved ceremony preference yet.\n"
     )
     return (
-        "## Plan mode selection (required)\n\n"
-        f"**Recommended:** `{recommended}` — {rationale}\n\n"
+        "## Ceremony selection (required)\n\n"
+        f"**Recommended:** `{recommended_ceremony}` — {rationale}\n\n"
         f"{persisted_line}\n"
-        "Ask the user to choose before continuing past step 1 "
-        "(per `templates/user-questions.md`):\n\n"
-        "**Question:** How detailed should this plan be?\n"
-        "**Context:** Both modes require concrete tasks (exact files, a check command, "
-        "and expected result). The difference is how much surrounding ceremony you want.\n\n"
-        "- **`lite`** — Shorter plan for small or uncertain work; fewer sections, same "
-        "correctness bar.\n"
-        "- **`default`** — Fuller plan when several modules or higher risk are in play: "
-        "deeper architecture, wave map, interface contracts, richer risk/rollback and docs.\n"
+        "Ask the user to choose **one ceremony band** before continuing past step 1 "
+        "(per `templates/user-questions.md`). Do **not** offer only "
+        "`normal`/`lite` or `default`/`lite` — those are legacy labels.\n\n"
+        "**Question:** How deep should this plan run?\n"
+        "**Context:** Every band still requires concrete tasks (exact files, a check "
+        "command, and expected result). Ceremony only changes how much surrounding "
+        "process and narrative you write.\n\n"
+        "- **`light`** — Short plan for small or uncertain work (maps to legacy `lite`).\n"
+        "- **`medium`** — Standard full plan (default when risk is clear).\n"
+        "- **`detailed`** — Deeper architecture, waves, contracts, risk/docs.\n"
+        "- **`comprehensive`** — Maximum deepen; use sparingly.\n"
         "- Optional: **Save as my default** for future sessions.\n\n"
-        "Record the choice in `state.custom['plan_mode']` via planner notes in "
-        "`.codex/forge/memory/planner.md` and proceed with that mode for steps 2–7.\n"
+        "Record `state.custom['ceremony']` and set `state.custom['plan_mode']` via "
+        "`map_to_plan_mode` (`light`→`lite`, else `default`). Persist notes in "
+        "`.forge/memory/planner.md` and proceed with that ceremony for steps 2–7.\n"
     )
 
 
