@@ -57,10 +57,22 @@ def test_preference_roundtrip(monkeypatch, tmp_path):
     from scripts.plan import plan_modes
 
     monkeypatch.setattr(plan_modes, "runtime_memory_dir", lambda search_dir=None: tmp_path)
-    save_persisted_preference("lite")
+    save_persisted_preference("light")
     assert load_persisted_preference() == "lite"
     data = json.loads((tmp_path / "plan-preference.json").read_text())
+    assert data["default_ceremony"] == "light"
     assert data["default_mode"] == "lite"
+
+
+def test_preference_reads_legacy_default_mode(monkeypatch, tmp_path):
+    from scripts.plan import plan_modes
+
+    monkeypatch.setattr(plan_modes, "runtime_memory_dir", lambda search_dir=None: tmp_path)
+    (tmp_path / "plan-preference.json").write_text(
+        json.dumps({"default_mode": "default"}) + "\n", encoding="utf-8"
+    )
+    assert load_persisted_preference() == "default"
+    assert plan_modes.load_persisted_ceremony() == "medium"
 
 
 def test_hydrate_legacy_mode():
@@ -71,18 +83,6 @@ def test_hydrate_legacy_mode():
     assert custom["plan_mode"] == DEFAULT_MODE
     _, migrated2 = hydrate_legacy_mode(custom)
     assert migrated2 is False
-
-
-def test_mode_selection_block_cli():
-    block = format_mode_selection_block(
-        recommended="lite",
-        rationale="small scope",
-        persisted=None,
-        resolved_mode="lite",
-        resolution_source="cli",
-    )
-    assert "no confirmation needed" in block
-    assert "light" in block
 
 
 def test_mode_selection_block_ceremony_cli_skips_prompt():
@@ -114,7 +114,8 @@ def test_mode_selection_block_prompt():
     assert "detailed" in block
     assert "comprehensive" in block
     assert "Do **not** offer only" in block
-    assert "legacy `lite`" in block
+    assert "`light`" in block
+    assert "`medium`" in block
 
 
 def test_ensure_plan_initialized_syncs_plan_mode_from_ceremony_cli(tmp_path, monkeypatch):

@@ -32,7 +32,9 @@ def preference_path(search_dir: Path | None = None) -> Path:
 
 
 def load_persisted_preference(search_dir: Path | None = None) -> str | None:
-    """Load saved default mode, or None if unset/invalid."""
+    """Load saved default ceremony band (or legacy default_mode), else None."""
+    from scripts.shared.ceremony import map_from_plan_mode, map_to_plan_mode, normalize_ceremony
+
     path = preference_path(search_dir)
     if not path.exists():
         return None
@@ -40,36 +42,76 @@ def load_persisted_preference(search_dir: Path | None = None) -> str | None:
         data = json.loads(path.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return None
+    ceremony = normalize_ceremony(data.get("default_ceremony"))
+    if ceremony:
+        return map_to_plan_mode(ceremony)
     mode = data.get("default_mode")
     if mode and normalize_mode(mode) in PLAN_MODES:
+        # Still return internal plan_mode for callers; ceremony is preferred key on write.
+        return normalize_mode(mode)
+    if map_from_plan_mode(str(mode) if mode else None):
         return normalize_mode(mode)
     return None
 
 
-def save_persisted_preference(mode: str, search_dir: Path | None = None) -> Path:
-    """Persist user's default plan mode for future new sessions."""
+def save_persisted_preference(mode_or_ceremony: str, search_dir: Path | None = None) -> Path:
+    """Persist user's default ceremony for future new sessions.
+
+    Accepts a ceremony band or an internal plan_mode (`lite`/`default`).
+    """
+    from scripts.shared.ceremony import (
+        map_from_plan_mode,
+        map_to_plan_mode,
+        normalize_ceremony,
+    )
+
+    ceremony = normalize_ceremony(mode_or_ceremony) or map_from_plan_mode(mode_or_ceremony)
+    if ceremony is None:
+        ceremony = "light"
     path = preference_path(search_dir)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
-        json.dumps({"default_mode": normalize_mode(mode)}, indent=2) + "\n",
+        json.dumps(
+            {
+                "default_ceremony": ceremony,
+                # Keep default_mode for older readers during transition.
+                "default_mode": map_to_plan_mode(ceremony),
+            },
+            indent=2,
+        )
+        + "\n",
         encoding="utf-8",
     )
     return path
 
 
+def load_persisted_ceremony(search_dir: Path | None = None) -> str | None:
+    """Load saved default ceremony band, or None."""
+    from scripts.shared.ceremony import map_from_plan_mode, normalize_ceremony
+
+    path = preference_path(search_dir)
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+    ceremony = normalize_ceremony(data.get("default_ceremony"))
+    if ceremony:
+        return ceremony
+    return map_from_plan_mode(data.get("default_mode"))
+
+
 def resolve_mode_for_step1(
-    cli_mode: str | None,
     *,
     resumed_session: bool = False,
     stored_mode: str | None = None,
 ) -> tuple[str, str]:
-    """Resolve mode at step 1.
+    """Resolve internal plan_mode when CLI did not set ceremony.
 
-    Returns (mode, resolution_source) where source is one of:
-    cli, session, preference, fallback.
+    Plan depth is chosen via ``--ceremony`` (not ``--mode``). Returns
+    ``(mode, resolution_source)`` where source is ``session`` or ``fallback``.
     """
-    if cli_mode:
-        return normalize_mode(cli_mode), "cli"
     if resumed_session and stored_mode:
         return normalize_mode(stored_mode), "session"
     return DEFAULT_MODE, "fallback"
@@ -159,14 +201,6 @@ def format_mode_selection_block(
             f"**Active:** `{active_ceremony}` (from CLI — no confirmation needed).\n"
         )
 
-    if resolution_source == "cli":
-        active = resolved_mode or recommended
-        shown = active_ceremony or map_from_plan_mode(active) or active
-        return (
-            "## Ceremony\n\n"
-            f"**Active:** `{shown}` (from CLI — no confirmation needed).\n"
-        )
-
     if resolution_source == "session":
         if resolved_mode or active_ceremony:
             shown = active_ceremony or map_from_plan_mode(resolved_mode) or resolved_mode
@@ -194,13 +228,14 @@ def format_mode_selection_block(
         "**Context:** Every band still requires concrete tasks (exact files, a check "
         "command, and expected result). Ceremony only changes how much surrounding "
         "process and narrative you write.\n\n"
-        "- **`light`** — Short plan for small or uncertain work (maps to legacy `lite`).\n"
+        "- **`light`** — Short plan for small or uncertain work.\n"
         "- **`medium`** — Standard full plan (default when risk is clear).\n"
         "- **`detailed`** — Deeper architecture, waves, contracts, risk/docs.\n"
         "- **`comprehensive`** — Maximum deepen; use sparingly.\n"
-        "- Optional: **Save as my default** for future sessions.\n\n"
-        "Record `state.custom['ceremony']` and set `state.custom['plan_mode']` via "
-        "`map_to_plan_mode` (`light`→`lite`, else `default`). Persist notes in "
+        "- Optional: **Save as my default** for future sessions "
+        "(`--save-ceremony-preference`).\n\n"
+        "Record `state.custom['ceremony']` and derive internal `plan_mode` via "
+        "`map_to_plan_mode` for templates. Persist notes in "
         "`.forge/memory/planner.md` and proceed with that ceremony for steps 2–7.\n"
     )
 

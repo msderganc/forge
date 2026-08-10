@@ -6,20 +6,15 @@ cli_flags:
     type: bool
     default: false
     help: "Overwrite an existing plan file at step 1 even if it contains content."
-  - name: "--mode"
-    type: str
-    default: null
-    choices: ["default", "lite"]
-    help: "Plan mode: default (full governance) or lite (concise, same task rigor)."
   - name: "--ceremony"
     type: str
     default: null
     choices: ["light", "medium", "detailed", "comprehensive"]
-    help: "Ceremony band (process depth). Overrides estimate; orthogonal to --mode."
-  - name: "--save-mode-preference"
+    help: "Ceremony band (process depth). Overrides estimate."
+  - name: "--save-ceremony-preference"
     type: bool
     default: false
-    help: "When used with --mode, persist that mode as the default for future plan sessions."
+    help: "When used with --ceremony, persist that band as the default for future plan sessions."
 steps:
   - step: 1
     phase: Frame

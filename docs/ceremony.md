@@ -46,8 +46,9 @@ handoff when present (`ceremony_source=inherited`).
 State keys: `ceremony`, `ceremony_rationale`, `ceremony_source`
 (`cli` | `estimated` | `escalated` | `inherited`).
 
-Legacy depth knobs (`scope_tier`, plan `lite`, `--effort`, `--quick`) map into
-ceremony internally — prefer `--ceremony` in user vocabulary.
+Legacy depth knobs (`scope_tier`, internal plan narrative `plan_mode`, `--effort`,
+`--quick`) still map into ceremony for estimates — user-facing plan depth is
+**`--ceremony` only** (the old plan `--mode default|lite` flag was removed).
 
 Integrity floors (stay hard even at light): design `spec_required`, diagnose
 high-severity technique gates, and other non-`soft_when` gates.

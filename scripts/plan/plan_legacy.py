@@ -416,7 +416,6 @@ def handle_step_1(args: argparse.Namespace) -> None:
     state.custom["handoff_content"] = handoff_content
     state.custom["plan_file"] = plan_file
 
-    cli_mode = getattr(args, "mode", None)
     cli_ceremony = getattr(args, "ceremony", None)
     persisted = load_persisted_preference()
     recommended, rec_rationale = recommend_mode(handoff_content)
@@ -433,7 +432,6 @@ def handle_step_1(args: argparse.Namespace) -> None:
         resolution_source = "cli"
     else:
         plan_mode, resolution_source = resolve_mode_for_step1(
-            cli_mode,
             resumed_session=False,
             stored_mode=prior_mode,
         )
@@ -444,9 +442,10 @@ def handle_step_1(args: argparse.Namespace) -> None:
     state.custom["plan_mode_recommended"] = recommended
     state.custom["plan_mode_recommendation_rationale"] = rec_rationale
     state.custom["plan_mode_resolution"] = resolution_source
-    if getattr(args, "save_mode_preference", False) and (cli_mode or ceremony):
-        save_persisted_preference(plan_mode)
+    if getattr(args, "save_ceremony_preference", False) and ceremony:
+        save_persisted_preference(ceremony)
         state.custom["plan_mode_preference_saved"] = plan_mode
+        state.custom["ceremony_preference_saved"] = ceremony
 
     save_state(state, sp, label=getattr(args, "label", None))
 
@@ -699,21 +698,15 @@ def main():
         help="Overwrite an existing plan file at step 1 even if it contains content.",
     )
     parser.add_argument(
-        "--mode",
-        choices=["default", "lite"],
-        default=None,
-        help="Legacy plan narrative depth (maps into ceremony). Prefer --ceremony.",
-    )
-    parser.add_argument(
         "--ceremony",
         choices=["light", "medium", "detailed", "comprehensive"],
         default=None,
         help="Process depth band (overrides estimate).",
     )
     parser.add_argument(
-        "--save-mode-preference",
+        "--save-ceremony-preference",
         action="store_true",
-        help="When used with --mode, persist that mode as the default for future plan sessions.",
+        help="When used with --ceremony, persist that band as the default for future plan sessions.",
     )
     args = parser.parse_args()
     apply_resolved_workflow_step(args, SKILL_NAME, MAX_STEP)

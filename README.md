@@ -172,7 +172,7 @@ Turns an approved direction into a concrete implementation plan: waves, tasks, a
 
 **Artifacts:** plan file under `memory/plans/`; `memory/planner.md`.
 
-**Notable flags:** `--quick`; `--mode default|lite`; `--save-mode-preference`.
+**Notable flags:** `--quick`; `--ceremony light|medium|detailed|comprehensive`; `--save-ceremony-preference`.
 
 **Default handoff:** [evaluate](#evaluate) `--mode pre` (implement is a common alternative).
 
@@ -469,6 +469,7 @@ After `forge install --cursor`, the plugin under `~/.cursor/plugins/local/forge/
 | **1.12.1** | Expose `--ceremony` on the `forge` CLI and ask plan for light/medium/detailed/comprehensive (not legacy normal/lite) |
 | **1.12.2** | Plan CLI `--ceremony` skips re-prompt and syncs `plan_mode`; e2e asserts outer CLI ceremony flags |
 | **1.12.3** | Add `scripts/e2e_cli_skill_matrix.py` — 3+ forge-CLI scenarios per skill (ceremony/mode/reject) |
+| **1.13.0** | Plan is ceremony-only: removed `--mode default\|lite` and `--save-mode-preference`; use `--ceremony` / `--save-ceremony-preference` |
 
 *(There was no 1.5 release — numbering jumped 1.4 to 1.6.)*
 

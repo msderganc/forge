@@ -55,7 +55,7 @@ COMMAND_OVERRIDES: dict[str, dict[str, str]] = {
     "plan": {
         "tell_user": "- **Plan** turns an approved direction into tasks — no code edits during planning.",
         "agent_run": "Run **plan** at step one. Planning-only — no git mutations.",
-        "codex_extra": "See `templates/plan-modes.md` for default vs lite modes.",
+        "codex_extra": "See `templates/plan-modes.md` for ceremony bands (`light`…`comprehensive`).",
     },
     "evaluate": {
         "tell_user": (

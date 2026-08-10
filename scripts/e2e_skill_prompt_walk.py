@@ -737,7 +737,7 @@ def main() -> int:
         ("sketch", 3, [], None, None),
         ("ship", 1, [], None, None),
         ("ux-review", 6, [], None, None),
-        ("plan", 7, ["--mode", "lite", "--force"], None, _prepare_plan),
+        ("plan", 7, ["--ceremony", "light", "--force"], None, _prepare_plan),
         ("implement", 8, [], None, _prepare_implement),
         ("code-review", 6, ["--mode", "deep"], None, None),
         ("takeover", 6, ["--goal", "e2e prompt-walk ship-ready check"], None, None),

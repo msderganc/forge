@@ -55,7 +55,7 @@ def build_parser() -> argparse.ArgumentParser:
             "--ceremony",
             choices=["light", "medium", "detailed", "comprehensive"],
             default=None,
-            help="Process depth band (overrides estimate). Prefer this over legacy lite/default/--effort.",
+            help="Process depth band (overrides estimate).",
         )
 
     # evaluate
@@ -160,15 +160,9 @@ def build_parser() -> argparse.ArgumentParser:
     add_ceremony_flag(pl)
     pl.add_argument("--force", action="store_true")
     pl.add_argument(
-        "--mode",
-        choices=["default", "lite"],
-        default=None,
-        help="Legacy plan narrative depth (maps into ceremony). Prefer --ceremony.",
-    )
-    pl.add_argument(
-        "--save-mode-preference",
+        "--save-ceremony-preference",
         action="store_true",
-        help="With --mode, persist that mode as the default for future plan sessions",
+        help="With --ceremony, persist that band as the default for future plan sessions",
     )
 
     # implement

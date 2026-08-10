@@ -16,7 +16,7 @@ Full-tree `pyscn check .` (complexity + dead code, clones skipped):
 | Clone pairs (similarity ≥ 0.8) | **~166** | Informational — track, do not gate CI |
 | Dead code (critical) | **0** | Clean |
 
-Repo config: **`.pyscn.toml`** sets `max_complexity = 15` for local/CI `pyscn check` when using `-c .pyscn.toml` or project root discovery. Forge structural probes may pass `--max-complexity 15` for this repo.
+Repo config: **`.pyscn.toml`** sets `max_complexity = 15` (with `medium_threshold = 12`; pyscn requires `max_complexity > medium_threshold` or `0`) for local/CI `pyscn check` when using `-c .pyscn.toml` or project root discovery. Forge structural probes may pass `--max-complexity 15` for this repo.
 
 ## Disposition tiers
 

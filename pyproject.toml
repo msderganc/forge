@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "forge-next"
-version = "1.12.3"
+version = "1.13.0"
 description = "Forge Codex: install-once workflow orchestrators for Cursor/Codex"
 readme = "README.md"
 requires-python = ">=3.10"

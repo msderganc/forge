@@ -54,10 +54,7 @@ def ensure_plan_initialized(
 
     from scripts.shared.ceremony import map_to_plan_mode, normalize_ceremony
 
-    cli_mode = state.custom.get("mode")
-    # Plan's --mode flag is narrative depth (lite/default), not an evaluate variant.
-    if cli_mode not in ("lite", "default"):
-        cli_mode = None
+    # Plan no longer accepts --mode; depth is --ceremony only.
     ceremony = normalize_ceremony(
         str(state.custom.get("ceremony"))
         if state.custom.get("ceremony") is not None
@@ -70,14 +67,13 @@ def ensure_plan_initialized(
         plan_mode = map_to_plan_mode(ceremony)
         resolution_source = "cli"
     else:
+        # Preference / estimate: derive plan_mode from ceremony when present.
         plan_mode, resolution_source = resolve_mode_for_step1(
-            cli_mode,
             resumed_session=False,
             stored_mode=None,
         )
         if resolution_source == "fallback":
             resolution_source = "prompt"
-        # Keep plan_mode and ceremony aligned when ceremony already estimated.
         if ceremony and ceremony_source in ("estimated", "inherited", "escalated"):
             plan_mode = map_to_plan_mode(ceremony)
 
@@ -87,11 +83,10 @@ def ensure_plan_initialized(
     state.custom["plan_mode_recommended"] = recommended
     state.custom["plan_mode_recommendation_rationale"] = rec_rationale
     state.custom["plan_mode_resolution"] = resolution_source
-    if state.custom.get("save_mode_preference") and (
-        cli_mode or ceremony_source == "cli"
-    ):
-        save_persisted_preference(plan_mode)
+    if state.custom.get("save_ceremony_preference") and ceremony_source == "cli" and ceremony:
+        save_persisted_preference(ceremony)
         state.custom["plan_mode_preference_saved"] = plan_mode
+        state.custom["ceremony_preference_saved"] = ceremony
 
     # Stash mode block for step-1 append
     persisted = load_persisted_preference()

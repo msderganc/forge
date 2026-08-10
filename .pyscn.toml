@@ -4,9 +4,10 @@
 
 [complexity]
 enabled = true
+# Gate threshold for CI / probes; must be > medium_threshold (or 0 for no limit).
 max_complexity = 15
 low_threshold = 9
-medium_threshold = 19
+medium_threshold = 12
 
 [dead_code]
 enabled = true

@@ -287,20 +287,19 @@ def build_cases(root: Path, plan: Path) -> list[CaseResult]:
         ],
     ))
     cases.append(check(
-        root, skill="plan", case="legacy-mode-lite",
-        argv=["plan", "--step", "1", "--mode", "lite", "--force", "--label", "p-mode"],
-        require_substrings=["Ceremony", "no confirmation needed"],
+        root, skill="plan", case="save-ceremony-preference",
+        argv=[
+            "plan", "--step", "1", "--ceremony", "detailed", "--force",
+            "--save-ceremony-preference", "--label", "p-save",
+        ],
+        require_substrings=["**Active:** `detailed`"],
         forbid_substrings=["Ceremony selection (required)"],
-        expect_ceremony="light",
-        expect_plan_mode="lite",
+        expect_ceremony="detailed", expect_ceremony_source="cli", expect_plan_mode="default",
     ))
     cases.append(check(
-        root, skill="plan", case="legacy-mode-default",
-        argv=["plan", "--step", "1", "--mode", "default", "--force", "--label", "p-def"],
-        require_substrings=["Ceremony", "no confirmation needed"],
-        forbid_substrings=["Ceremony selection (required)"],
-        expect_ceremony="medium",
-        expect_plan_mode="default",
+        root, skill="plan", case="reject-mode-flag",
+        argv=["plan", "--step", "1", "--mode", "lite", "--force", "--label", "p-mode"],
+        expect_exit={2},
     ))
 
     # ---- develop alias (3+) ----
