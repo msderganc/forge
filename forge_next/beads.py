@@ -64,14 +64,24 @@ def beads_availability(repo_root: Path | None = None) -> tuple[bool, str, dict[s
         "via": None,
     }
     override = (os.environ.get("FORGE_BD_COMMAND") or "").strip()
-    bd = resolve_bd_executable()
-    if not bd:
-        return False, "not available (`bd` not on PATH; FORGE_BD_COMMAND unset)", details
+    if override:
+        parts = _split_bd_command(override)
+        if not parts:
+            return False, "not available (`bd` not on PATH; FORGE_BD_COMMAND unset)", details
+        display = override
+        details["bd_path"] = display
+        details["via"] = "FORGE_BD_COMMAND"
+        probe_cmd = override
+    else:
+        bd = shutil.which("bd")
+        if not bd:
+            return False, "not available (`bd` not on PATH; FORGE_BD_COMMAND unset)", details
+        display = bd
+        details["bd_path"] = bd
+        details["via"] = "path"
+        probe_cmd = bd
 
-    details["bd_path"] = bd
-    details["via"] = "FORGE_BD_COMMAND" if override else "path"
-
-    version = _probe_bd_version(override or bd)
+    version = _probe_bd_version(probe_cmd)
     if version:
         details["bd_version"] = version
 
@@ -80,7 +90,7 @@ def beads_availability(repo_root: Path | None = None) -> tuple[bool, str, dict[s
         details["beads_dir"] = str(beads_dir)
         details["beads_dir_exists"] = beads_dir.is_dir()
 
-    summary = f"available (`{bd}`"
+    summary = f"available (`{display}`"
     if version:
         summary += f", {version}"
     summary += f", via {details['via']})"
@@ -98,10 +108,12 @@ def _probe_bd_version(bd_cmd: str) -> str | None:
                 [*parts, flag],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=8,
                 check=False,
             )
-        except (OSError, subprocess.TimeoutExpired):
+        except (OSError, subprocess.TimeoutExpired, UnicodeError):
             continue
         out = (proc.stdout or proc.stderr or "").strip()
         if proc.returncode == 0 and out:

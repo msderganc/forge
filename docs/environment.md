@@ -37,6 +37,7 @@ Per-clone prefs: `forge graphify on|off|status` writes `.forge/state/graphify-pr
 | `FORGE_STRUCTURAL_EIGHT_AGENTS_FULL` | Full eight-agent dispatch (not default trio) |
 | `FORGE_SKYLOS_AUDIT` | Full Skylos audit (not dead-code-only) |
 | `FORGE_KNIP_COMMAND` / `FORGE_MADGE_COMMAND` / `FORGE_JSCN_COMMAND` / `FORGE_PYSCN_COMMAND` / `FORGE_SKYLOS_COMMAND` | Override probe commands |
+| `FORGE_BD_COMMAND` | Override Beads CLI (default: `bd` on PATH); may be multi-token (e.g. `uv run bd`) |
 | `FORGE_STRUCTURAL_TOOLS_PREFIX` | Install prefix (Windows Store Python) |
 
 See [structural-quality.md](structural-quality.md).
