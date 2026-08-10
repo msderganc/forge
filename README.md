@@ -359,7 +359,7 @@ Full guide: [`docs/graphify.md`](docs/graphify.md).
 
 [Beads](https://github.com/steveyegge/beads) (`bd` CLI) can sync epics, findings, tasks, and dependencies with Forge memory and handoffs. Without it, prompts use memory files and sequential IDs. Design records `beads_available` on startup; nothing hard-requires Beads.
 
-Guide: `templates/beads-integration.md`.
+`forge install` and `forge doctor` surface whether `bd` is on PATH (they do not install Beads). Guide: `templates/beads-integration.md`.
 
 ### Structural probes — knip, madge, jscn, pyscn, skylos
 
@@ -469,6 +469,7 @@ After `forge install --cursor`, the plugin under `~/.cursor/plugins/local/forge/
 | **1.12.1** | Expose `--ceremony` on the `forge` CLI and ask plan for light/medium/detailed/comprehensive (not legacy normal/lite) |
 | **1.12.2** | Plan CLI `--ceremony` skips re-prompt and syncs `plan_mode`; e2e asserts outer CLI ceremony flags |
 | **1.12.3** | Add `scripts/e2e_cli_skill_matrix.py` — 3+ forge-CLI scenarios per skill (ceremony/mode/reject) |
+| **1.13.1** | Install/doctor UX: emoji sections, structural-tool ✓/✗ marks, surface Beads (`bd`) availability |
 | **1.13.0** | Plan is ceremony-only: removed `--mode default\|lite` and `--save-mode-preference`; use `--ceremony` / `--save-ceremony-preference` |
 
 *(There was no 1.5 release — numbering jumped 1.4 to 1.6.)*

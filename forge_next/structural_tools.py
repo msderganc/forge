@@ -563,12 +563,38 @@ def structural_tools_warnings_for_doctor() -> list[str]:
     return structural_tools_missing_warnings()
 
 
+def _structural_tool_mark(present: bool) -> str:
+    """Green check / red X for install notices; ASCII or NO_COLOR safe."""
+    ascii_mode = os.environ.get("FORGE_ASCII") == "1"
+    if ascii_mode:
+        return "[OK]" if present else "[X]"
+    no_color = os.environ.get("NO_COLOR") is not None
+    if present:
+        return "✓" if no_color else "\033[32m✓\033[0m"
+    return "✗" if no_color else "\033[31m✗\033[0m"
+
+
+def _structural_tool_status_line(name: str, value: str | None, *, detail: str | None = None) -> str:
+    mark = _structural_tool_mark(bool(value))
+    if value:
+        suffix = f" ({detail})" if detail else ""
+        return f"  {mark} {name}: {value}{suffix}"
+    return f"  {mark} {name}: not found"
+
+
 def structural_tools_install_notice_lines(result: StructuralToolsInstallResult | None = None) -> list[str]:
     """Human-readable block for forge install output."""
+    ascii_mode = os.environ.get("FORGE_ASCII") == "1"
+    header = (
+        "Structural quality tools"
+        if ascii_mode
+        else "🔧 Structural quality tools"
+    )
     if skip_structural_tools():
         return [
             "",
-            "Structural quality tools: skipped (FORGE_SKIP_STRUCTURAL_TOOLS=1).",
+            header,
+            "  Skipped (FORGE_SKIP_STRUCTURAL_TOOLS=1).",
             "",
         ]
 
@@ -581,8 +607,11 @@ def structural_tools_install_notice_lines(result: StructuralToolsInstallResult |
                 manifest_path=str(manifest_path()),
                 knip=manifest.get("knip"),
                 madge=manifest.get("madge"),
+                jscn=manifest.get("jscn"),
                 pyscn=manifest.get("pyscn"),
                 pyscn_via=manifest.get("pyscn_via"),
+                skylos=manifest.get("skylos"),
+                skylos_via=manifest.get("skylos_via"),
             )
         else:
             result = StructuralToolsInstallResult(
@@ -594,19 +623,15 @@ def structural_tools_install_notice_lines(result: StructuralToolsInstallResult |
 
     lines = [
         "",
-        "Structural quality tools (knip, madge, jscn, pyscn, skylos — code-review / evaluate Pass B):",
+        header,
+        "  knip, madge, jscn, pyscn, skylos — code-review / evaluate Pass B",
         f"  Prefix: {result.prefix}",
+        _structural_tool_status_line("knip", result.knip),
+        _structural_tool_status_line("madge", result.madge),
+        _structural_tool_status_line("jscn", result.jscn),
+        _structural_tool_status_line("pyscn", result.pyscn, detail=result.pyscn_via),
+        _structural_tool_status_line("skylos", result.skylos, detail=result.skylos_via),
     ]
-    if result.knip:
-        lines.append(f"  knip: {result.knip}")
-    if result.madge:
-        lines.append(f"  madge: {result.madge}")
-    if result.jscn:
-        lines.append(f"  jscn: {result.jscn}")
-    if result.pyscn:
-        lines.append(f"  pyscn: {result.pyscn} ({result.pyscn_via or 'unknown'})")
-    if result.skylos:
-        lines.append(f"  skylos: {result.skylos} ({result.skylos_via or 'unknown'})")
     if result.warnings:
         lines.append("  Warnings:")
         for w in result.warnings:

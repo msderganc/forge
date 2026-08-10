@@ -130,6 +130,17 @@ def check_structural_tools() -> tuple[dict[str, object], list[str]]:
         return {"structural_tools": "error"}, [f"Structural tools check failed: {exc}"]
 
 
+def check_beads(repo_root: Path) -> tuple[dict[str, object], list[str]]:
+    try:
+        from forge_next.beads import beads_warnings_for_doctor, doctor_checks
+
+        return {"beads": doctor_checks(repo_root)}, list(
+            beads_warnings_for_doctor(repo_root)
+        )
+    except Exception as exc:
+        return {"beads": "error"}, [f"Beads check failed: {exc}"]
+
+
 def check_vendored_snapshots(repo_root: Path) -> tuple[dict[str, object], list[str]]:
     vendored = sorted(repo_root.glob("forge_next-0.14.*"))
     if not vendored:

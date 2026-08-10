@@ -6,6 +6,10 @@ import json
 import os
 from typing import Any
 
+from forge_next.beads import (
+    beads_availability,
+    beads_install_notice_lines,
+)
 from forge_next.graphify import graphify_availability, graphify_install_notice_lines
 from forge_next.structural_tools import (
     install_structural_tools as run_structural_tools_install,
@@ -44,6 +48,7 @@ def build_install_payload(
     structural_result: Any | None,
 ) -> dict[str, Any]:
     graphify_available, graphify_status = graphify_availability()
+    beads_available, beads_status, beads_details = beads_availability()
     return {
         "command": "install",
         "repo_url": repo_url,
@@ -53,12 +58,27 @@ def build_install_payload(
         "graphify_available": graphify_available,
         "graphify_status": graphify_status,
         "graphify_onboarding": graphify_install_notice_lines(),
+        "beads_available": beads_available,
+        "beads_status": beads_status,
+        "beads": beads_details,
+        "beads_onboarding": beads_install_notice_lines(),
         "structural_tools": structural_result.to_dict() if structural_result else None,
         "structural_tools_onboarding": structural_tools_install_notice_lines(
             structural_result
         ),
         "error": None,
     }
+
+
+def _ascii_mode() -> bool:
+    return os.environ.get("FORGE_ASCII") == "1"
+
+
+def _section(emoji: str, label: str) -> str:
+    """Section header; emoji dropped when ``FORGE_ASCII=1`` / ``--ascii``."""
+    if _ascii_mode():
+        return label
+    return f"{emoji} {label}"
 
 
 def print_install_human(
@@ -71,39 +91,49 @@ def print_install_human(
     install_codex: bool,
 ) -> None:
     title = (
-        "forge - install" if os.environ.get("FORGE_ASCII") == "1" else "forge — install"
+        "forge - install" if _ascii_mode() else "forge — install"
     )
-    print(title)
+    print(_section("📦", title))
     print("=" * 60)
+    print("")
+    print(_section("✅", "Installed"))
     for k, v in installed.items():
-        print(f"{k}: {v}")
+        print(f"  {k}: {v}")
     if warnings:
         print("")
-        print("Warnings:")
+        print(_section("⚠️", "Warnings"))
         for w in warnings:
-            print(f"- {w}")
+            print(f"  - {w}")
     for line in graphify_install_notice_lines():
+        print(line.rstrip())
+    for line in beads_install_notice_lines():
         print(line.rstrip())
     for line in structural_tools_install_notice_lines(structural_result):
         print(line.rstrip())
     print("")
-    print("Next steps:")
-    print("- Restart your editor/agent environment(s) so new commands are picked up.")
-    print("- Run: forge doctor")
+    print(_section("➡️", "Next steps"))
+    print("  - Restart your editor/agent environment(s) so new commands are picked up.")
+    print("  - Run: forge doctor")
     if install_claude:
         print(
-            "- Claude: Graphify hooks merged into ~/.claude/settings.json "
+            "  - Claude: Graphify hooks merged into ~/.claude/settings.json "
             "(re-run: forge claude-graphify)"
         )
     if install_codex:
         print(
-            "- Codex: run `forge codex-agents --force` if developer_instructions "
+            "  - Codex: run `forge codex-agents --force` if developer_instructions "
             "were not updated"
         )
     if structural_skipped:
         print(
-            "- Structural tools were skipped; re-run `forge install` without "
+            "  - Structural tools were skipped; re-run `forge install` without "
             "--skip-structural-tools or use `forge structural-tools install`"
+        )
+    beads_ok, _, _ = beads_availability()
+    if not beads_ok:
+        print(
+            "  - Optional: install Beads (`bd`) for issue tracking — "
+            "https://github.com/steveyegge/beads"
         )
 
 

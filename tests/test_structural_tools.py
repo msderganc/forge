@@ -123,3 +123,25 @@ def test_doctor_checks_without_tools(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_missing_warnings_empty_when_skip_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("FORGE_SKIP_STRUCTURAL_TOOLS", "1")
     assert st.structural_tools_missing_warnings() == []
+
+
+def test_install_notice_marks_present_and_absent(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("FORGE_SKIP_STRUCTURAL_TOOLS", raising=False)
+    monkeypatch.setenv("FORGE_ASCII", "1")
+    result = st.StructuralToolsInstallResult(
+        ok=True,
+        prefix="/prefix",
+        manifest_path="/m.json",
+        knip="/prefix/knip",
+        madge=None,
+        jscn="/prefix/jscn",
+        pyscn=None,
+        skylos="/bin/skylos",
+        skylos_via="path",
+    )
+    text = "\n".join(st.structural_tools_install_notice_lines(result))
+    assert "[OK] knip: /prefix/knip" in text
+    assert "[X] madge: not found" in text
+    assert "[OK] jscn: /prefix/jscn" in text
+    assert "[X] pyscn: not found" in text
+    assert "[OK] skylos: /bin/skylos (path)" in text

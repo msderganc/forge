@@ -220,6 +220,7 @@ def run_doctor(repo_root: Path, json_output: bool = False) -> None:
 
     run_session_cleanup(search_dir=repo_root)
     from forge_next.cli_doctor_checks import (
+        check_beads,
         check_claude_graphify,
         check_codex_anchor,
         check_forge_path,
@@ -245,6 +246,7 @@ def run_doctor(repo_root: Path, json_output: bool = False) -> None:
         check_claude_graphify(),
         check_studio_assets(),
         check_structural_tools(),
+        check_beads(repo_root),
         check_vendored_snapshots(repo_root),
         check_workflow_prompts(),
     ):
