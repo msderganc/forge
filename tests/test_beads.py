@@ -46,6 +46,23 @@ def test_beads_override_env(monkeypatch: pytest.MonkeyPatch) -> None:
     assert details["bd_path"] == "/custom/bd"
 
 
+def test_beads_multiword_override_keeps_full_command(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("FORGE_BD_COMMAND", "uv run bd")
+    monkeypatch.setattr(beads, "_probe_bd_version", lambda cmd: "ok" if cmd == "uv run bd" else None)
+    available, summary, details = beads.beads_availability()
+    assert available is True
+    assert details["bd_path"] == "uv run bd"
+    assert "`uv run bd`" in summary
+
+
+def test_probe_bd_version_swallows_unicode_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    def boom(*_a, **_k):
+        raise UnicodeDecodeError("utf-8", b"\xff", 0, 1, "bad")
+
+    monkeypatch.setattr(beads.subprocess, "run", boom)
+    assert beads._probe_bd_version("bd") is None
+
+
 def test_doctor_warns_when_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("FORGE_BD_COMMAND", raising=False)
     monkeypatch.setattr(beads.shutil, "which", lambda name: None)
