@@ -759,7 +759,7 @@ def _apply_override_args_to_state(state: SkillState, args: Any) -> None:
         "mode",
         "base_url",
         "force",
-        "save_mode_preference",
+        "save_ceremony_preference",
         "defer_graphify_waves",
         "no_structural",
         "effort",

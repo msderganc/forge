@@ -51,18 +51,26 @@ def test_forge_launcher_can_run_against_foreign_repo(tmp_path: Path) -> None:
     assert "status" in res.stdout.lower()
 
 
-def test_launcher_parser_accepts_plan_mode_flags() -> None:
+def test_launcher_parser_accepts_plan_ceremony_flags() -> None:
     from forge_next.cli import build_parser
 
     parser = build_parser()
     plan_args = parser.parse_args(
-        ["plan", "--step", "1", "--mode", "default", "--save-mode-preference"]
+        ["plan", "--step", "1", "--ceremony", "medium", "--save-ceremony-preference"]
     )
-    assert plan_args.mode == "default"
-    assert plan_args.save_mode_preference is True
+    assert plan_args.ceremony == "medium"
+    assert plan_args.save_ceremony_preference is True
 
 
-def test_launcher_forwards_plan_mode_to_orchestrator(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_launcher_rejects_plan_mode_flag() -> None:
+    from forge_next.cli import build_parser
+
+    parser = build_parser()
+    with pytest.raises(SystemExit):
+        parser.parse_args(["plan", "--step", "1", "--mode", "lite"])
+
+
+def test_launcher_forwards_plan_ceremony_to_orchestrator(monkeypatch: pytest.MonkeyPatch) -> None:
     import forge_next.cli as cli
     import forge_next.cli_dispatch as dispatch
 
@@ -80,13 +88,15 @@ def test_launcher_forwards_plan_mode_to_orchestrator(monkeypatch: pytest.MonkeyP
     monkeypatch.setattr(dispatch, "run_module_main", fake_run_module)
 
     with pytest.raises(SystemExit) as exc:
-        cli.main(["plan", "--step", "1", "--mode", "lite", "--save-mode-preference"])
+        cli.main(
+            ["plan", "--step", "1", "--ceremony", "light", "--save-ceremony-preference"]
+        )
 
     assert exc.value.code == 0
     assert captured["module_name"] == "scripts.plan.plan"
     argv = captured["argv"]
     assert isinstance(argv, list)
-    assert argv == ["--step", "1", "--mode", "lite", "--save-mode-preference"]
+    assert argv == ["--step", "1", "--ceremony", "light", "--save-ceremony-preference"]
 
 
 def test_launcher_parser_accepts_multi_token_targets() -> None:

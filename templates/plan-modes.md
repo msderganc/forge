@@ -1,27 +1,25 @@
-# Plan Modes Reference
+# Plan depth reference
 
 Used by `forge plan`, planner/architect agents, and `templates/writing-plans.md`.
 
-See also `templates/scope-size-model.md`.
+See also `docs/ceremony.md` and `templates/scope-size-model.md`.
 
-## Modes (legacy) and ceremony
+## Ceremony (user-facing)
 
-User-facing depth is **`--ceremony`**: `light` | `medium` | `detailed` | `comprehensive`
-(see `docs/ceremony.md`). Plan still stores an internal `plan_mode` for templates:
+Plan depth is **`--ceremony`**: `light` | `medium` | `detailed` | `comprehensive`.
 
-| Ceremony | Internal `plan_mode` |
-|----------|----------------------|
-| `light` | `lite` |
-| `medium` / `detailed` / `comprehensive` | `default` |
+| Band | Best for | Narrative depth |
+|------|----------|-----------------|
+| `light` | Small or uncertain work (preferred starting point) | Concise sections, same task rigor |
+| `medium` | Clear multi-file / moderate risk | Full governance sections |
+| `detailed` | Multi-module, contracts, richer risk/docs | Deeper architecture and waves |
+| `comprehensive` | Maximum deepen — use sparingly | Full deepen + extra analysis |
 
-Legacy CLI `--mode {default,lite}` still works and maps into ceremony.
+Bias **down** when unsure. Prefer `light`.
 
-| Mode | Best for | Ceremony |
-|------|----------|----------|
-| `lite` | **Preferred starting point** for small/uncertain/trivial work | Concise sections, same task rigor |
-| `default` | Multi-module features, moderate/high risk, handoff-heavy work | Full governance sections |
-
-Use **`light`** (or legacy `lite`) when unsure. Escalate only with clear risk.
+Internally, plan still stores `plan_mode` for template contracts
+(`light` → `lite`, other bands → `default`). Agents and CLI should speak
+**ceremony**, not `lite`/`default`.
 
 ## Shared invariants (non-negotiable)
 
@@ -33,12 +31,10 @@ Use **`light`** (or legacy `lite`) when unsure. Escalate only with clear risk.
 
 ## Precedence
 
-1. CLI `--mode <default|lite>`
-2. Interactive user choice (when CLI omitted on new session)
+1. CLI `--ceremony <band>`
+2. Interactive user choice (when CLI omitted on a new session)
 3. Persisted preference in `.forge/memory/plan-preference.json`
-4. System fallback: **`lite`**
-
-Legacy sessions without `plan_mode` in state hydrate as `lite` with a one-time note (unless tests pin an older default).
+4. System fallback: **`light`**
 
 ## Preference file
 
@@ -46,8 +42,11 @@ Path: `.forge/memory/plan-preference.json`
 
 ```json
 {
-  "default_mode": "lite"
+  "default_ceremony": "light"
 }
 ```
 
-Saving preference affects **future new sessions** only, not in-progress state.
+Older files with `"default_mode": "lite"|"default"` are still read and mapped
+into ceremony. Saving preference affects **future new sessions** only.
+
+Use `--save-ceremony-preference` with `--ceremony` to update the file.
