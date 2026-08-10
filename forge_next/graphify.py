@@ -407,11 +407,14 @@ def graphify_availability() -> tuple[bool, str]:
 def graphify_install_notice_lines() -> list[str]:
     """Human-readable onboarding for `forge install` output (status first, then steps)."""
     available, summary = graphify_availability()
+    ascii_mode = os.environ.get("FORGE_ASCII") == "1"
+    header = "Graphify" if ascii_mode else "🗺️ Graphify"
     lines = [
         "",
-        f"Graphify: {summary}",
+        header,
+        f"  Graphify: {summary}",
+        "  Optional — gives `forge takeover` a codebase map, not your chat history.",
         "",
-        "Graphify (optional — gives `forge takeover` a codebase map, not your chat history):",
     ]
     if available:
         lines.extend(

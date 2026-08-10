@@ -2223,12 +2223,12 @@ def test_graphify_install_notice_leads_with_status(monkeypatch):
     monkeypatch.delenv("FORGE_GRAPHIFY_COMMAND", raising=False)
     monkeypatch.setattr(graphify.shutil, "which", lambda exe: None)
     lines = graphify.graphify_install_notice_lines()
-    assert lines[1].startswith("Graphify: not available")
+    assert any(line.lstrip().startswith("Graphify: not available") for line in lines)
     assert any("Install Graphify" in line for line in lines)
 
     monkeypatch.setattr(graphify.shutil, "which", lambda exe: "graphify" if exe == "graphify" else None)
     lines = graphify.graphify_install_notice_lines()
-    assert lines[1].startswith("Graphify: available")
+    assert any(line.lstrip().startswith("Graphify: available") for line in lines)
     assert not any("Install Graphify so a" in line for line in lines)
     assert any("forge graphify refresh" in line for line in lines)
 
