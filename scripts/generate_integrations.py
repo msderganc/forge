@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate Cursor/Claude command packs and Codex skill wrappers from commands.json."""
+"""Generate Cursor/Claude command packs and Codex/Claude skill wrappers from commands.json."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SPEC_PATH = REPO_ROOT / "integrations" / "spec" / "commands.json"
 CURSOR_DIR = REPO_ROOT / "integrations" / "cursor-plugin" / "commands"
 CLAUDE_DIR = REPO_ROOT / "integrations" / "claude" / "commands"
+CLAUDE_SKILLS_DIR = REPO_ROOT / "integrations" / "claude" / "skills"
 CODEX_DIR = REPO_ROOT / "integrations" / "codex" / "skills"
 
 GRAPHIFY_BLOCK = """\
@@ -184,36 +185,77 @@ description: {cmd['description']}
 {body}"""
 
 
+def _yaml_quote_description(description: str) -> str:
+    """Emit a YAML description value (folded block when multi-sentence / long)."""
+    text = description.strip()
+    if "\n" in text or len(text) > 100 or ": " in text:
+        return ">-\n  " + text
+    return text
+
+
+def _claude_skill_md(cmd: dict) -> str:
+    """Claude Code skill: kebab name (no colon) + trigger-rich description + command body."""
+    sub = cmd["cli_subcommand"]
+    skill_name = f"forge-{sub}"
+    desc = _yaml_quote_description(cmd["description"])
+    if sub in UTILITY_COMMANDS:
+        command_path = CLAUDE_DIR / f"{sub}.md"
+        if not command_path.is_file():
+            raise FileNotFoundError(
+                f"Missing Claude command for utility skill: {command_path}"
+            )
+        text = command_path.read_text(encoding="utf-8")
+        normalized = text.replace("\r\n", "\n").lstrip("\ufeff")
+        if not normalized.startswith("---\n"):
+            raise ValueError(f"{command_path} missing YAML frontmatter")
+        parts = normalized.split("---", 2)
+        if len(parts) < 3:
+            raise ValueError(f"{command_path} malformed YAML frontmatter")
+        body = parts[2].lstrip("\n")
+        return f"---\nname: {skill_name}\ndescription: {desc}\n---\n\n{body}"
+    # Workflow skills: same body as slash command, Claude-friendly name
+    content = _workflow_command_md(cmd)
+    normalized = content.replace("\r\n", "\n")
+    parts = normalized.split("---", 2)
+    body = parts[2].lstrip("\n")
+    announce = (
+        f'Announce at start: "Using {skill_name} to run the Forge **{sub}** workflow."\n\n'
+    )
+    return f"---\nname: {skill_name}\ndescription: {desc}\n---\n\n{announce}{body}"
+
+
+def _write_if_changed(path: Path, text: str, *, check_only: bool, changed: list[str]) -> None:
+    existing = path.read_text(encoding="utf-8") if path.is_file() else None
+    if existing == text:
+        return
+    changed.append(str(path.relative_to(REPO_ROOT)))
+    if not check_only:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+
 def generate(*, check_only: bool = False) -> list[str]:
     spec = _load_spec()
     changed: list[str] = []
     for cmd in spec["commands"]:
         sub = cmd["cli_subcommand"]
-        if sub in UTILITY_COMMANDS:
-            continue
-        cursor_path = CURSOR_DIR / f"{sub}.md"
-        claude_path = CLAUDE_DIR / f"{sub}.md"
-        codex_path = CODEX_DIR / f"forge-{sub}" / "SKILL.md"
-        content = _workflow_command_md(cmd)
-        for path, text in (
-            (cursor_path, content),
-            (claude_path, content),
-        ):
-            existing = path.read_text(encoding="utf-8") if path.is_file() else None
-            if existing != text:
-                changed.append(str(path.relative_to(REPO_ROOT)))
-                if not check_only:
-                    path.parent.mkdir(parents=True, exist_ok=True)
-                    path.write_text(text, encoding="utf-8")
-        codex_text = _codex_skill_md(cmd)
-        existing_codex = (
-            codex_path.read_text(encoding="utf-8") if codex_path.is_file() else None
+        claude_skill_path = CLAUDE_SKILLS_DIR / f"forge-{sub}" / "SKILL.md"
+        if sub not in UTILITY_COMMANDS:
+            cursor_path = CURSOR_DIR / f"{sub}.md"
+            claude_path = CLAUDE_DIR / f"{sub}.md"
+            codex_path = CODEX_DIR / f"forge-{sub}" / "SKILL.md"
+            content = _workflow_command_md(cmd)
+            _write_if_changed(cursor_path, content, check_only=check_only, changed=changed)
+            _write_if_changed(claude_path, content, check_only=check_only, changed=changed)
+            _write_if_changed(
+                codex_path, _codex_skill_md(cmd), check_only=check_only, changed=changed
+            )
+        _write_if_changed(
+            claude_skill_path,
+            _claude_skill_md(cmd),
+            check_only=check_only,
+            changed=changed,
         )
-        if existing_codex != codex_text:
-            changed.append(str(codex_path.relative_to(REPO_ROOT)))
-            if not check_only:
-                codex_path.parent.mkdir(parents=True, exist_ok=True)
-                codex_path.write_text(codex_text, encoding="utf-8")
     return changed
 
 

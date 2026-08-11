@@ -8,7 +8,7 @@
     {
       "id": "forge:evaluate",
       "cli_subcommand": "evaluate",
-      "description": "Plan review (pre) or implementation audit (post). Use code-review for full-team review.",
+      "description": "Plan review (pre) or implementation audit (post). Use when the user asks to evaluate a plan, review the plan before coding, or audit implementation against a plan. Prefer code-review for full-team PR review.",
       "examples": [
         "forge evaluate --step 1 --mode pre --plan \"<plan keywords or path>\"",
         "forge evaluate --repo \"<path>\" --step 1 --mode post --plan \"<plan>\""
@@ -17,7 +17,7 @@
     {
       "id": "forge:sketch",
       "cli_subcommand": "sketch",
-      "description": "Organize intent and open decisions before design (optional CONTEXT.md/ADRs).",
+      "description": "Organize intent and open decisions before design (optional CONTEXT.md/ADRs). Use when goals are fuzzy, decisions are open, or the user wants to clarify what to build before design/plan.",
       "examples": [
         "forge sketch --step 1",
         "forge sketch --step 1 --with-domain-docs"
@@ -26,7 +26,7 @@
     {
       "id": "forge:design",
       "cli_subcommand": "design",
-      "description": "Investigate, brainstorm solutions, and write a named design spec at docs/forge/specs/ (medium/large).",
+      "description": "Investigate, brainstorm solutions, and write a named design spec at docs/forge/specs/ (medium/large). Use when the user asks to design, spec, explore options, or shape architecture before planning.",
       "examples": [
         "forge design --step 1",
         "forge design --step 1 --quick"
@@ -35,7 +35,7 @@
     {
       "id": "forge:plan",
       "cli_subcommand": "plan",
-      "description": "Create an implementation plan.",
+      "description": "Create an implementation plan with tasks and waves. Use when the user asks to plan, write a plan, break work into tasks, or produce an implementation plan before coding.",
       "examples": [
         "forge plan --step 1",
         "forge plan --repo \"<path>\" --step 1 --quick"
@@ -44,7 +44,7 @@
     {
       "id": "forge:implement",
       "cli_subcommand": "implement",
-      "description": "Execute an implementation plan in waves.",
+      "description": "Execute an implementation plan in waves. Use when the user asks to implement, execute the plan, build the planned changes, or run implementation waves.",
       "examples": [
         "forge implement --step 1",
         "forge implement --step 3 --state \"<state path>\""
@@ -53,7 +53,7 @@
     {
       "id": "forge:code-review",
       "cli_subcommand": "code-review",
-      "description": "Run structured code review workflows.",
+      "description": "Run structured code review workflows. Use when the user asks for code review, PR review, or a full-team review of changes.",
       "examples": [
         "forge code-review --step 1",
         "forge code-review --step 1 --quick"
@@ -62,7 +62,7 @@
     {
       "id": "forge:test",
       "cli_subcommand": "test",
-      "description": "Run tests or author mock flows (run/flows modes).",
+      "description": "Run tests or author mock flows (run/flows modes). Use when the user asks to run tests, check the suite, or write end-to-end mock user journeys.",
       "examples": [
         "forge test --step 1",
         "forge test --mode flows --step 1"
@@ -71,7 +71,7 @@
     {
       "id": "forge:ux-review",
       "cli_subcommand": "ux-review",
-      "description": "Real-browser product UX audit: map IA/journeys, walk pages and controls, prioritized findings report.",
+      "description": "Real-browser product UX audit: map IA/journeys, walk pages and controls, prioritized findings report. Use when the user asks for a UX review or to walk the product UI.",
       "examples": [
         "forge ux-review --step 1",
         "forge ux-review --step 1 --base-url http://localhost:3000"
@@ -80,7 +80,7 @@
     {
       "id": "forge:diagnose",
       "cli_subcommand": "diagnose",
-      "description": "Deep diagnosis workflow for bugs/regressions.",
+      "description": "Deep diagnosis workflow for bugs/regressions. Use when root cause is unknown, something is broken or flaky, or the user asks to diagnose/debug a failure.",
       "examples": [
         "forge diagnose --step 1",
         "forge diagnose --step 1 --quick"
@@ -89,7 +89,7 @@
     {
       "id": "forge:takeover",
       "cli_subcommand": "takeover",
-      "description": "Infer work and drive Forge skills until ship-ready (replaces resume/iterate).",
+      "description": "Infer work and drive Forge skills until ship-ready (replaces resume/iterate). Use when the user asks to takeover, keep going, or drive the workflow autonomously until ship-ready.",
       "examples": [
         "forge takeover",
         "forge takeover --design docs/forge/specs/2026-06-20-feature-design.md",
@@ -100,7 +100,7 @@
     {
       "id": "forge:status",
       "cli_subcommand": "status",
-      "description": "Show a lightweight workflow dashboard for a repo.",
+      "description": "Show a lightweight workflow dashboard for a repo. Use when checking active Forge state or what to do next.",
       "examples": [
         "forge status",
         "forge status --repo \"<path>\""
@@ -109,7 +109,7 @@
     {
       "id": "forge:doctor",
       "cli_subcommand": "doctor",
-      "description": "Diagnose installation/PATH/encoding/runtime-root issues.",
+      "description": "Diagnose installation/PATH/encoding/runtime-root issues. Use when Forge install, PATH, or runtime setup looks broken.",
       "examples": [
         "forge doctor",
         "forge doctor --repo \"<path>\""
@@ -118,7 +118,7 @@
     {
       "id": "forge:graphify",
       "cli_subcommand": "graphify",
-      "description": "Optional Graphify index: refresh status for forge takeover; install or remove a fail-soft post-commit hook.",
+      "description": "Optional Graphify index: refresh status for forge takeover; install or remove a fail-soft post-commit hook. Use when setting up or troubleshooting the codebase graph index.",
       "examples": [
         "forge graphify refresh",
         "forge graphify refresh --repo \"<path>\"",
@@ -130,7 +130,7 @@
     {
       "id": "forge:ship",
       "cli_subcommand": "ship",
-      "description": "Finalize work: commit, push, PR, merge, and publish release artifacts.",
+      "description": "Finalize work: commit, push, PR, merge, and publish release artifacts. Use when the user says ship, finalize, release, commit and push, open a PR, merge, or publish.",
       "examples": [
         "forge ship --step 1",
         "forge ship"
@@ -138,4 +138,3 @@
     }
   ]
 }
-

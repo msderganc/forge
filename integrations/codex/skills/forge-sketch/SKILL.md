@@ -1,6 +1,6 @@
 ---
 name: forge:sketch
-description: Organize intent and open decisions before design (optional CONTEXT.md/ADRs).
+description: Organize intent and open decisions before design (optional CONTEXT.md/ADRs). Use when goals are fuzzy, decisions are open, or the user wants to clarify what to build before design/plan.
 ---
 
 Do **not** write `docs/forge/specs/*-design.md` in sketch.

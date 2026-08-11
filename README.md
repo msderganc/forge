@@ -433,7 +433,13 @@ Most skills run `forge …` under the hood via `<invoke cmd="…"/>`; `$forge:sh
 
 ## Claude Code
 
-After `forge install --claude`, slash commands live under `~/.claude/commands/forge/`. The installer also runs `forge claude-graphify`, merging Graphify hooks into `~/.claude/settings.json`: a session-start reminder when `graphify-out/` exists, pre-tool-use context on search-like tools, and a prompt-submit check for `forge:` mentions. Re-run `forge claude-graphify` after upgrading `forge-next`.
+After `forge install --claude`:
+
+- **Slash commands** live under `~/.claude/commands/forge/` (`/forge:plan`, …).
+- **Skills** install flat under `~/.claude/skills/` — `using-forge` (meta router) plus `forge-plan`, `forge-implement`, and the other workflow skills. Claude matches these on the skill `description` field (same mechanism as Superpowers), so asking to “plan” should route to Forge instead of freestyle or competing process skills.
+- **Graphify hooks** merge into `~/.claude/settings.json` via `forge claude-graphify` (session-start reminder, pre-tool-use context on search-like tools, prompt-submit check for `forge:` mentions).
+
+Re-run `forge install --claude` (and `forge claude-graphify` after upgrading `forge-next`), then restart Claude Code so skills are picked up.
 
 ---
 
@@ -469,6 +475,7 @@ After `forge install --cursor`, the plugin under `~/.cursor/plugins/local/forge/
 | **1.12.1** | Expose `--ceremony` on the `forge` CLI and ask plan for light/medium/detailed/comprehensive (not legacy normal/lite) |
 | **1.12.2** | Plan CLI `--ceremony` skips re-prompt and syncs `plan_mode`; e2e asserts outer CLI ceremony flags |
 | **1.12.3** | Add `scripts/e2e_cli_skill_matrix.py` — 3+ forge-CLI scenarios per skill (ceremony/mode/reject) |
+| **1.14.0** | Claude Code: `using-forge` meta-skill + `forge-*` skills under `~/.claude/skills/` for auto-routing (plan/implement/…) |
 | **1.13.2** | Harden Beads install probe (UTF-8 decode; multi-token `FORGE_BD_COMMAND` display) |
 | **1.13.1** | Install/doctor UX: emoji sections, structural-tool ✓/✗ marks, surface Beads (`bd`) availability |
 | **1.13.0** | Plan is ceremony-only: removed `--mode default\|lite` and `--save-mode-preference`; use `--ceremony` / `--save-ceremony-preference` |

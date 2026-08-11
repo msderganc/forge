@@ -1,6 +1,6 @@
 ---
 name: forge:test
-description: Run tests or author mock flows (run/flows modes).
+description: Run tests or author mock flows (run/flows modes). Use when the user asks to run tests, check the suite, or write end-to-end mock user journeys.
 ---
 
 ## Hard rule — what the user sees

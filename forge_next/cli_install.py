@@ -7,11 +7,18 @@ import os
 import shutil
 from pathlib import Path
 
-from forge_next.cli_install_claude import apply_claude_graphify_hooks, install_claude_commands
+from forge_next.cli_install_claude import (
+    apply_claude_graphify_hooks,
+    install_claude_commands,
+    install_claude_skills,
+    list_claude_skill_names,
+    uninstall_claude_skills,
+)
 from forge_next.cli_install_codex import apply_codex_agents_config, install_codex_skills
 from forge_next.cli_install_cursor import install_cursor_plugin
 from forge_next.cli_install_io import (
     default_claude_commands_dir,
+    default_claude_skills_dir,
     default_codex_skills_dir,
     default_cursor_local_plugins_dir,
     with_downloaded_repo,
@@ -60,6 +67,10 @@ def _install_integrations_from_repo(
         warnings.extend(w)
         if path:
             installed["claude_commands"] = path
+        path, w = install_claude_skills(repo_root)
+        warnings.extend(w)
+        if path:
+            installed["claude_skills"] = path
 
     if install_codex:
         path, w = install_codex_skills(repo_root, codex_dir=codex_dir)
@@ -180,6 +191,22 @@ def run_uninstall(
             else default_claude_commands_dir()
         )
         rm_tree(base / "forge", "claude_commands")
+        # Prefer skill names from the live checkout when available; fall back to
+        # whatever forge-* / using-forge dirs exist under ~/.claude/skills.
+        repo_guess = Path(__file__).resolve().parent.parent
+        skill_names = list_claude_skill_names(repo_guess)
+        if not skill_names:
+            skills_base = default_claude_skills_dir()
+            if skills_base.is_dir():
+                skill_names = [
+                    p.name
+                    for p in skills_base.iterdir()
+                    if p.is_dir()
+                    and (p.name == "using-forge" or p.name.startswith("forge-"))
+                ]
+        skill_removed, skill_missing = uninstall_claude_skills(skill_names=skill_names)
+        removed.update(skill_removed)
+        missing.extend(skill_missing)
 
     if uninstall_codex:
         base = (

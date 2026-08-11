@@ -116,6 +116,10 @@ def print_install_human(
     print("  - Run: forge doctor")
     if install_claude:
         print(
+            "  - Claude: slash commands under ~/.claude/commands/forge/; "
+            "skills (using-forge + forge-*) under ~/.claude/skills/ — restart Claude Code"
+        )
+        print(
             "  - Claude: Graphify hooks merged into ~/.claude/settings.json "
             "(re-run: forge claude-graphify)"
         )

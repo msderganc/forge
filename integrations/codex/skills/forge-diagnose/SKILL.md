@@ -1,6 +1,6 @@
 ---
 name: forge:diagnose
-description: Deep diagnosis workflow for bugs/regressions.
+description: Deep diagnosis workflow for bugs/regressions. Use when root cause is unknown, something is broken or flaky, or the user asks to diagnose/debug a failure.
 ---
 
 Read `templates/diagnose-execution-playbooks.md` per phase.

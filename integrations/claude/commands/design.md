@@ -1,6 +1,6 @@
 ---
 name: forge:design
-description: Investigate, brainstorm solutions, and write a named design spec at docs/forge/specs/ (medium/large).
+description: Investigate, brainstorm solutions, and write a named design spec at docs/forge/specs/ (medium/large). Use when the user asks to design, spec, explore options, or shape architecture before planning.
 ---
 
 ## Hard rule — what the user sees

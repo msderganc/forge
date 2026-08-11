@@ -1,6 +1,6 @@
 ---
 name: forge:evaluate
-description: Plan review (pre) or implementation audit (post). Use code-review for full-team review.
+description: Plan review (pre) or implementation audit (post). Use when the user asks to evaluate a plan, review the plan before coding, or audit implementation against a plan. Prefer code-review for full-team PR review.
 ---
 
 <invoke cmd="forge evaluate --mode pre --plan '<plan path>'" />

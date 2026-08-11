@@ -1,6 +1,6 @@
 ---
 name: forge:ux-review
-description: Real-browser product UX audit: map IA/journeys, walk pages and controls, prioritized findings report.
+description: Real-browser product UX audit: map IA/journeys, walk pages and controls, prioritized findings report. Use when the user asks for a UX review or to walk the product UI.
 ---
 
 ## Hard rule — what the user sees

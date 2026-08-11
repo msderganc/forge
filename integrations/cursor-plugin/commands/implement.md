@@ -1,6 +1,6 @@
 ---
 name: forge:implement
-description: Execute an implementation plan in waves.
+description: Execute an implementation plan in waves. Use when the user asks to implement, execute the plan, build the planned changes, or run implementation waves.
 ---
 
 ## Hard rule — what the user sees

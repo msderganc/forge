@@ -24,6 +24,11 @@ def default_claude_commands_dir() -> Path:
     return home / ".claude" / "commands"
 
 
+def default_claude_skills_dir() -> Path:
+    home = Path(os.environ.get("USERPROFILE") or str(Path.home()))
+    return home / ".claude" / "skills"
+
+
 def default_codex_skills_dir() -> Path:
     home = Path(os.environ.get("USERPROFILE") or str(Path.home()))
     return home / ".codex" / "skills"

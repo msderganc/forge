@@ -1,6 +1,6 @@
 ---
 name: forge:plan
-description: Create an implementation plan.
+description: Create an implementation plan with tasks and waves. Use when the user asks to plan, write a plan, break work into tasks, or produce an implementation plan before coding.
 ---
 
 ## Hard rule — what the user sees

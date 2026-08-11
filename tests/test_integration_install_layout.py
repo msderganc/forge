@@ -124,3 +124,19 @@ def test_codex_skills_use_skill_md_layout():
         )
         assert body.strip(), f"{skill.relative_to(REPO_ROOT)} needs a non-empty body"
 
+
+def test_claude_skills_use_skill_md_layout(spec_commands: dict):
+    skills_root = REPO_ROOT / "integrations" / "claude" / "skills"
+    assert (skills_root / "using-forge" / "SKILL.md").is_file()
+    for cmd in spec_commands["commands"]:
+        sub = cmd["cli_subcommand"]
+        skill = skills_root / f"forge-{sub}" / "SKILL.md"
+        assert skill.is_file(), f"Missing Claude skill {skill.relative_to(REPO_ROOT)}"
+        text = skill.read_text(encoding="utf-8")
+        fm, body = _split_yaml_frontmatter(text)
+        assert fm is not None, f"{skill.relative_to(REPO_ROOT)} must use --- frontmatter"
+        assert f"name: forge-{sub}" in fm
+        assert "description:" in fm
+        assert "Use when" in fm
+        assert body.strip()
+
