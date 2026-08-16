@@ -948,3 +948,87 @@ def test_ensure_primary_probe_plan_reuses_scope_note(
     assert calls == []
     assert plan["scope_paths"] == ["a.py"]
     assert "Scoped Python probes" in plan["reasoning"]
+
+
+GIT_RANGE_TOKEN = "c79194e5..9cf18e96"
+
+
+def test_git_revision_range_is_not_a_filesystem_probe_target(tmp_path: Path) -> None:
+    """code-review --target SHA..SHA must not be handed to jscn/madge/skylos as a path."""
+    (tmp_path / "package.json").write_text("{}", encoding="utf-8")
+    src = tmp_path / "src"
+    src.mkdir()
+    (src / "index.js").write_text("export const x = 1;\n", encoding="utf-8")
+    (tmp_path / "mod.py").write_text("x = 1\n", encoding="utf-8")
+
+    jscn = sp._jscn_probe_targets(
+        tmp_path, node_root=tmp_path, effective_scope=[GIT_RANGE_TOKEN]
+    )
+    madge = sp._madge_entry(tmp_path, [GIT_RANGE_TOKEN])
+    skylos = sp._skylos_scan_targets(
+        repo_root=tmp_path, python_root=tmp_path, scope_paths=[GIT_RANGE_TOKEN]
+    )
+    git_paths = sp._git_changed_paths_for_review(
+        tmp_path, [GIT_RANGE_TOKEN], mode="pr"
+    )
+    leaked = {
+        "jscn": jscn,
+        "madge": madge,
+        "skylos": skylos,
+        "git_paths": git_paths,
+    }
+    assert GIT_RANGE_TOKEN not in jscn, leaked
+    assert madge != GIT_RANGE_TOKEN, leaked
+    assert GIT_RANGE_TOKEN not in skylos, leaked
+    assert GIT_RANGE_TOKEN not in git_paths, leaked
+
+
+def test_inject_does_not_reintroduce_unresolved_git_range(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Empty resolved scope must not fall back to the raw --target revision range."""
+    (tmp_path / "package.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "pyproject.toml").write_text("[project]\nname='x'\n", encoding="utf-8")
+    (tmp_path / ".venv").mkdir()
+    inv = {
+        "repo_root": str(tmp_path),
+        "stack_hints": {"python": True, "node": True},
+        "markers": {"pyproject": True, "package_json_roots": ["."]},
+        "counts": {"py": 1, "js": 1},
+        "suggested_probe_roots": {"python": ".", "node": "."},
+    }
+    plan = sp.ensure_primary_probe_plan(
+        {"tools": ["jscn", "madge", "knip", "skylos"]},
+        inv,
+        skill_name="code-review",
+        step=3,
+        scope_paths=[GIT_RANGE_TOKEN],
+        mode="pr",
+    )
+    effective_scope, _note = sp.resolve_effective_scope_paths(
+        tmp_path,
+        [GIT_RANGE_TOKEN],
+        skill_name="code-review",
+        step=3,
+        mode="pr",
+    )
+    # Mirrors inject_structural_probes_section → run_probes scope selection.
+    run_scope = list(plan.get("scope_paths") or effective_scope)
+    assert GIT_RANGE_TOKEN not in (plan.get("scope_paths") or [])
+    assert GIT_RANGE_TOKEN not in (run_scope or [])
+
+
+def test_pass_b_hints_ignore_failed_probes() -> None:
+    lines = ["0", "1", "2", "3", "4", "5", "6"]
+    payload = {
+        "probes": [
+            {"tool": "knip", "status": "fail", "findings": []},
+            {"tool": "jscn", "status": "fail", "findings": []},
+            {"tool": "pyscn", "status": "fail", "findings": []},
+            {"tool": "skylos", "status": "fail", "findings": []},
+        ]
+    }
+    sp._insert_primary_review_hints(lines, payload)
+    joined = "\n".join(lines)
+    assert "cite" not in joined
+    assert "Pass B" not in joined
