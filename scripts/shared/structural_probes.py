@@ -239,6 +239,38 @@ def _normalize_scope_token(token: str) -> str:
     return token.strip().replace("\\", "/").rstrip("/")
 
 
+def _is_git_rev_range(token: str) -> bool:
+    """True for ``sha..sha`` / ``main...HEAD`` — not relative paths like ``../src``."""
+    tok = _normalize_scope_token(token)
+    if not tok or tok in (".", "./"):
+        return False
+    if tok.startswith("../"):
+        return False
+    return "..." in tok or ".." in tok
+
+
+def _scope_token_exists(repo_root: Path, token: str) -> bool:
+    tok = _normalize_scope_token(token)
+    if not tok or _is_git_rev_range(tok):
+        return False
+    candidate = Path(tok)
+    if not candidate.is_absolute():
+        candidate = repo_root / tok
+    try:
+        return candidate.exists()
+    except OSError:
+        return False
+
+
+def _is_slow_cross_mount(path: Path) -> bool:
+    """WSL 9p mounts (``/mnt/<drive>/...``) stall inventory walks and probe CLIs."""
+    try:
+        parts = path.resolve().parts
+    except OSError:
+        parts = path.parts
+    return len(parts) >= 2 and parts[0] == "/" and parts[1] == "mnt"
+
+
 def is_broad_probe_scope(scope_paths: list[str] | None) -> bool:
     """True when scope would scan repo root or an unspecified whole tree."""
     if not scope_paths:
@@ -348,6 +380,15 @@ def _git_collect_merge_base_diffs(repo_root: Path, base: str | None) -> list[str
     return rows
 
 
+def _git_collect_range_diffs(repo_root: Path, tokens: list[str]) -> list[str]:
+    """Expand ``sha..sha`` / ``ref...ref`` tokens via ``git diff --name-only``."""
+    rows: list[str] = []
+    for tok in tokens:
+        if _is_git_rev_range(tok):
+            rows.extend(_git_run_names(repo_root, ["diff", "--name-only", tok]))
+    return rows
+
+
 def _git_collect_token_diffs(
     repo_root: Path,
     tokens: list[str],
@@ -355,7 +396,7 @@ def _git_collect_token_diffs(
 ) -> list[str]:
     rows: list[str] = []
     for tok in tokens:
-        if tok in ("", ".", "./"):
+        if tok in ("", ".", "./") or _is_git_rev_range(tok):
             continue
         if tok.endswith(".py") or "/" in tok:
             rows.extend(_git_run_names(repo_root, ["diff", "--name-only", "--", tok]))
@@ -425,13 +466,20 @@ def _git_changed_paths_for_review(
 ) -> list[str]:
     """Collect changed file paths from git for PR/code-review structural probes."""
     tokens = [_normalize_scope_token(str(t)) for t in (target_tokens or []) if str(t).strip()]
-    if tokens and not is_broad_probe_scope(tokens):
+    existing = [t for t in tokens if _scope_token_exists(repo_root, t)]
+    if (
+        tokens
+        and not is_broad_probe_scope(tokens)
+        and existing == tokens
+        and not any(_is_git_rev_range(t) for t in tokens)
+    ):
         return tokens
 
     paths: list[str] = []
     seen: set[str] = set()
     base = _git_default_merge_base(repo_root)
 
+    _dedupe_extend_paths(paths, seen, _git_collect_range_diffs(repo_root, tokens))
     _dedupe_extend_paths(paths, seen, _git_collect_merge_base_diffs(repo_root, base))
     _dedupe_extend_paths(paths, seen, _git_collect_token_diffs(repo_root, tokens, base))
     _dedupe_extend_paths(paths, seen, _gh_collect_pr_number_diffs(repo_root, tokens))
@@ -668,10 +716,7 @@ def _assign_review_scope_paths(
     merged: dict[str, Any],
     effective_scope: list[str],
 ) -> None:
-    if effective_scope:
-        merged["scope_paths"] = list(effective_scope)
-    elif "scope_paths" in merged and is_broad_probe_scope(merged.get("scope_paths")):
-        merged["scope_paths"] = []
+    merged["scope_paths"] = list(effective_scope)
 
 
 def _ensure_skylos_exclude_paths(merged: dict[str, Any]) -> None:
@@ -838,6 +883,22 @@ def _walk_repo_files(
     root = repo_root.resolve()
     limit = PROBE_INVENTORY_WALK_MAX if max_files is None else max_files
     yielded = 0
+    listed = _git_run_names(root, ["ls-files"])
+    listed.extend(_git_run_names(root, ["ls-files", "--others", "--exclude-standard"]))
+    if listed:
+        for rel in listed:
+            path = root / rel
+            if _should_prune_walk_path(path, root):
+                continue
+            if basename is not None and path.name != basename:
+                continue
+            if suffix is not None and not path.name.endswith(suffix):
+                continue
+            yield path
+            yielded += 1
+            if limit > 0 and yielded >= limit:
+                return
+        return
     for dirpath, dirnames, filenames in os.walk(root, topdown=True, followlinks=False):
         current = Path(dirpath)
         if _should_prune_walk_path(current, root):
@@ -1331,10 +1392,14 @@ def _skylos_scan_targets(
 ) -> list[str]:
     policy = _probe_ignore_policy(repo_root)
     if scope_paths:
-        return policy.filter_paths(
-            [str(p) for p in scope_paths if str(p).strip()],
-            for_scope=True,
-        )
+        existing = [
+            str(p).strip()
+            for p in scope_paths
+            if str(p).strip()
+            and not _is_git_rev_range(str(p))
+            and _scope_token_exists(repo_root, str(p))
+        ]
+        return policy.filter_paths(existing, for_scope=True)
     if python_root != repo_root:
         try:
             rel = str(python_root.relative_to(repo_root))
@@ -1505,7 +1570,11 @@ def _pyscn_effective_scope_targets(
     scoped = [
         p
         for p in (_normalize_scope_token(x) for x in effective_scope if str(x).strip())
-        if p and p not in (".", "./") and not policy.rel_is_ignored(p, for_scope=True)
+        if p
+        and p not in (".", "./")
+        and not _is_git_rev_range(p)
+        and not policy.rel_is_ignored(p, for_scope=True)
+        and _scope_token_exists(repo_root, p)
     ]
     return _cap_pyscn_targets(scoped)
 
@@ -1605,7 +1674,11 @@ def _jscn_probe_targets(
         scoped = [
             p
             for p in (_normalize_scope_token(x) for x in effective_scope if str(x).strip())
-            if p and p not in (".", "./") and not policy.rel_is_ignored(p, for_scope=True)
+            if p
+            and p not in (".", "./")
+            and not _is_git_rev_range(p)
+            and not policy.rel_is_ignored(p, for_scope=True)
+            and _scope_token_exists(repo_root, p)
         ]
         return scoped
 
@@ -1627,7 +1700,18 @@ def _jscn_probe_targets(
 
 def _madge_entry(node_root: Path, scope_paths: list[str] | None) -> str:
     if scope_paths:
-        return scope_paths[0]
+        for raw in scope_paths:
+            tok = _normalize_scope_token(str(raw))
+            if not tok or tok in (".", "./") or _is_git_rev_range(tok):
+                continue
+            candidate = Path(tok)
+            if not candidate.is_absolute():
+                candidate = node_root / tok
+            try:
+                if candidate.exists():
+                    return tok
+            except OSError:
+                continue
     for candidate in ("src", "lib", "app", "."):
         if (node_root / candidate).exists():
             return candidate
@@ -1642,6 +1726,22 @@ def _skip_probe(tool: str, reason: str) -> dict[str, Any]:
         "summary": reason,
         "findings": [],
     }
+
+
+def _unscoped_knip_skip_reason(
+    repo_root: Path, effective_scope: list[str] | None
+) -> str | None:
+    """knip always walks node_root — refuse that on 9p / large trees without JS scope."""
+    js_paths = filter_javascript_scope_paths(repo_root, list(effective_scope or []))
+    if _is_slow_cross_mount(repo_root):
+        return "skipped: slow cross-mount; refusing full-tree knip"
+    if js_paths:
+        return None
+    if effective_scope and not is_broad_probe_scope(effective_scope):
+        return "skipped: review scope has no JavaScript/TypeScript files"
+    if repo_has_large_ignored_dirs(repo_root):
+        return "skipped: refusing unscoped full-tree knip (large ignored dirs)"
+    return None
 
 
 def _append_probe_or_skip(
@@ -1718,12 +1818,17 @@ def run_probes(
         )
 
     probes: list[dict[str, Any]] = []
-    _append_probe_or_skip(
-        probes,
-        selected,
-        "knip",
-        lambda: run_knip_probe(node_root=node_root, timeout=timeout_per_tool),
-    )
+    skip_knip_reason = _unscoped_knip_skip_reason(root, effective_scope)
+    if skip_knip_reason and "knip" in selected:
+        _probe_progress(f"structural Pass B — skipping knip ({skip_knip_reason})")
+        probes.append(_skip_probe("knip", skip_knip_reason))
+    else:
+        _append_probe_or_skip(
+            probes,
+            selected,
+            "knip",
+            lambda: run_knip_probe(node_root=node_root, timeout=timeout_per_tool),
+        )
     _append_probe_or_skip(
         probes,
         selected,
@@ -1966,7 +2071,7 @@ def _insert_primary_review_hints(lines: list[str], payload: dict[str, Any]) -> N
     js_rows = [
         p
         for p in (payload.get("probes") or [])
-        if p.get("tool") in ("knip", "jscn") and p.get("status") != "skip"
+        if p.get("tool") in ("knip", "jscn") and p.get("status") == "pass"
     ]
     if js_rows:
         lines.insert(
@@ -1977,7 +2082,7 @@ def _insert_primary_review_hints(lines: list[str], payload: dict[str, Any]) -> N
     py_rows = [
         p
         for p in (payload.get("probes") or [])
-        if p.get("tool") in ("pyscn", "skylos") and p.get("status") != "skip"
+        if p.get("tool") in ("pyscn", "skylos") and p.get("status") == "pass"
     ]
     if py_rows:
         lines.insert(
@@ -2163,7 +2268,7 @@ def inject_structural_probes_section(
         f"structural Pass B — scope resolved "
         f"({len(effective_scope or [])} path(s){scope_suffix})"
     )
-    suggestion = suggest_probe_plan(inventory, scope_paths=effective_scope or scope_paths)
+    suggestion = suggest_probe_plan(inventory, scope_paths=effective_scope)
     write_stack_inventory(write_dir, inventory, suggestion)
 
     plan_file = write_dir / PLAN_NAME
@@ -2172,7 +2277,7 @@ def inject_structural_probes_section(
         inventory,
         skill_name=skill_name,
         step=step,
-        scope_paths=effective_scope or scope_paths,
+        scope_paths=effective_scope,
         mode=mode,
         scope_note=scope_note or "",
     )
@@ -2200,7 +2305,7 @@ def inject_structural_probes_section(
         )
         payload = run_probes(
             scan_root,
-            scope_paths=plan.get("scope_paths") or effective_scope or scope_paths,
+            scope_paths=list(plan.get("scope_paths") or effective_scope),
             state_dir=write_dir,
             quick_mode=quick_mode,
             plan=plan,
