@@ -15,6 +15,7 @@ User-facing guides for installing and running Forge workflows. Internal design n
 | Doc | Topic |
 |-----|--------|
 | [graphify.md](graphify.md) | Knowledge graph: refresh, hooks, ship-time banner, CI flags |
+| [pstack.md](pstack.md) | Optional pstack companion skills: git install, credit, attach map |
 | [structural-quality.md](structural-quality.md) | knip / madge / pyscn / skylos probes in code-review and evaluate |
 | [pyscn-quality-disposition.md](pyscn-quality-disposition.md) | Forge repo pyscn complexity/clone disposition and CI thresholds |
 | [sessions.md](sessions.md) | Parallel session directories under `.forge/sessions/` |

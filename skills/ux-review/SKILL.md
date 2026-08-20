@@ -23,6 +23,10 @@ Walk the live UI like a real user and produce an evidence-backed UX report.
 
 Shared runtime: [templates/workflow-skill-preamble.md](../../templates/workflow-skill-preamble.md).
 
+## pstack companion
+
+For pixel-match against a screenshot, optionally follow pstack visual-parity. Forge ux-review still owns the product walk. Canonical map: `templates/pstack-contract.md`. If pstack is not installed, skip.
+
 Criteria: [templates/ux-review-criteria.md](../../templates/ux-review-criteria.md).  
 Checklist: [templates/ux-review-coverage-checklist.md](../../templates/ux-review-coverage-checklist.md).  
 Report: [templates/ux-review-report.md](../../templates/ux-review-report.md).

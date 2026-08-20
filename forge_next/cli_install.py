@@ -23,6 +23,7 @@ from forge_next.cli_install_io import (
     default_cursor_local_plugins_dir,
     with_downloaded_repo,
 )
+from forge_next.cli_install_pstack import run_pstack_install, uninstall_pstack
 from forge_next.cli_install_report import (
     build_install_payload,
     emit_install_result,
@@ -91,6 +92,9 @@ def run_install(
     install_codex: bool,
     install_all: bool,
     skip_structural_tools: bool,
+    skip_pstack: bool,
+    pstack_repo_url: str,
+    pstack_ref: str,
     cursor_dir: str | None,
     claude_dir: str | None,
     codex_dir: str | None,
@@ -129,12 +133,27 @@ def run_install(
     )
     warnings.extend(struct_warnings)
 
+    pstack_cursor = Path(cursor_dir).expanduser() if cursor_dir else None
+    pstack_codex = Path(codex_dir).expanduser() if codex_dir else None
+    pstack_installed, pstack_warnings = run_pstack_install(
+        skip=skip_pstack,
+        repo_url=pstack_repo_url,
+        ref=pstack_ref,
+        cursor_plugins_dir=pstack_cursor,
+        claude_skills_dir=None,
+        codex_skills_dir=pstack_codex,
+    )
+    installed.update(pstack_installed)
+    warnings.extend(pstack_warnings)
+    pstack_skipped = skip_pstack or not pstack_installed
+
     payload = build_install_payload(
         repo_url=repo_url,
         ref=ref,
         installed=installed,
         warnings=warnings,
         structural_result=structural_result,
+        pstack_skipped=pstack_skipped,
     )
     emit_install_result(
         payload,
@@ -143,6 +162,7 @@ def run_install(
         install_codex=install_codex,
         structural_result=structural_result,
         structural_skipped=structural_skipped,
+        pstack_skipped=pstack_skipped,
     )
 
 
@@ -215,6 +235,16 @@ def run_uninstall(
             else default_codex_skills_dir()
         )
         rm_tree(base / "forge", "codex_skills")
+
+    pstack_removed, pstack_missing = uninstall_pstack(
+        cursor_plugins_dir=(
+            Path(cursor_dir).expanduser() if cursor_dir else None
+        ),
+        claude_skills_dir=None,
+        codex_skills_dir=(Path(codex_dir).expanduser() if codex_dir else None),
+    )
+    removed.update(pstack_removed)
+    missing.extend(pstack_missing)
 
     payload = {
         "command": "uninstall",

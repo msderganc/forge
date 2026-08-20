@@ -68,6 +68,10 @@ Integrity gates stay hard unless allowlisted `soft_when`. Full guide:
 
 **Structural quality (knip / madge / pyscn / skylos):** installed by default with `forge install` (warns if any tool missing); `forge structural-tools install` to refresh; skip with `forge install --skip-structural-tools` or `FORGE_SKIP_STRUCTURAL_TOOLS=1`. Shell helpers: `scripts/install/structural_tools.sh` and `.ps1`. Templates: `templates/structural-quality-probes.md`, `templates/structural-quality-eight-agents.md` (eight parallel Civil Learning subagents at dispatch); sidecars `.structural-probes.json`, `.structural-eight-agents.json`. See [`docs/structural-quality.md`](docs/structural-quality.md).
 
+## pstack
+
+Optional companion skills from [pstack](https://github.com/cursor/plugins/tree/main/pstack/skills). Canonical map: [`templates/pstack-contract.md`](templates/pstack-contract.md). `forge install` copies an allowlist by default. If pstack is not installed, skip. Named Forge skills always win.
+
 ## Process-first skill choice (Superpowers-style)
 
 When unsure which workflow to drive, prefer **investigation / diagnosis** before locking execution:

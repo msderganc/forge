@@ -20,6 +20,10 @@ Routing: [AGENTS.md](../../AGENTS.md) § Process-first.
 
 Shared runtime: [templates/workflow-skill-preamble.md](../../templates/workflow-skill-preamble.md).
 
+## pstack companion
+
+Optionally reach for `/figure-it-out`, `/show-me-your-work`, and `/technical-writing`. Canonical map: `templates/pstack-contract.md`. If pstack is not installed, skip.
+
 ## Safety guardrails
 
 Planning-only: no product source edits. No git mutation commands (`git add`, `commit`, `push`, `reset`, `rebase`, `checkout`, `restore`, `merge`, `stash`, `tag`). Never `--no-verify`.

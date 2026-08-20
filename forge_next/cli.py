@@ -390,6 +390,23 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Skip installing knip, madge (npm), and pyscn (default: install with forge install)",
     )
+    ins.add_argument(
+        "--skip-pstack",
+        action="store_true",
+        help="Skip installing allowlisted pstack skills from git (default: install with forge install)",
+    )
+    ins.add_argument(
+        "--pstack-repo-url",
+        type=str,
+        default="https://github.com/cursor/plugins",
+        help="GitHub repo URL for pstack skills (default: https://github.com/cursor/plugins)",
+    )
+    ins.add_argument(
+        "--pstack-ref",
+        type=str,
+        default="main",
+        help="Git ref/branch for the pstack repo (default: main)",
+    )
 
     # structural-tools — knip, madge, pyscn for Pass B quality probes
     st_tools = sub.add_parser(

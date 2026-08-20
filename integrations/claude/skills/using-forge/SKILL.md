@@ -96,6 +96,10 @@ Prefer, in order:
 
 Never show raw terminal invocation lines to the user; summarize phases instead.
 
+## pstack companion
+
+Named Forge skills always win. If pstack is present, `/bro` restyles the last agent message in plain language. Canonical map: `templates/pstack-contract.md`. If pstack is not installed, skip.
+
 ## Do not route to Forge when
 
 - Pure Q&A with no delivery ask and no Forge skill named
