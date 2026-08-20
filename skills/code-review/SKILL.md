@@ -21,6 +21,10 @@ Two-axis review aligned with [mattpocock/skills code-review](https://github.com/
 
 Shared runtime: [templates/workflow-skill-preamble.md](../../templates/workflow-skill-preamble.md).
 
+## pstack companion
+
+After Pass A/B, if the pstack plugin is installed, optionally run `/interrogate` on the same diff for extra multi-model pressure. Not a substitute for Forge code-review. Canonical map: `templates/pstack-contract.md`. If pstack is not installed, skip.
+
 **Structural probes are always on** unless `--no-structural`. At step 3 the orchestrator runs probes (**pyscn** / **knip** when applicable) and writes `.structural-probes.json`. Fan-out scales with effort: **S3/S4/S8** for `light`/`standard`; full S1–S8 for `thorough`. Prefer diff-scoped findings; unrelated hits stay advisory.
 
 **Team by effort:** `light` = Architect + QA; `standard` = Architect + QA (+ Security when auth/data); `thorough` = full six. Escalate to thorough only when ≥2 signals agree (keyword **and** file breadth).

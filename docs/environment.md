@@ -51,6 +51,7 @@ See [structural-quality.md](structural-quality.md).
 | `FORGE_USE_LAUNCHER` | Set by `forge` CLI (internal) |
 | `FORGE_ASCII` | ASCII-only banners (Windows consoles) |
 | `FORGE_SKIP_SUBAGENT_LIFECYCLE` | Disable Cursor subagent hooks |
+| `FORGE_SKIP_PSTACK` | Skip copying allowlisted pstack skills during `forge install` |
 | `FORGE_SKILL_ENGINE` | Default on. Set to `0` to force legacy skill orchestrator bodies instead of `run_skill` (see [declarative-skills.md](declarative-skills.md)) |
 
 ## Studio (internal)
@@ -82,3 +83,4 @@ export FORGE_SKIP_GRAPHIFY=1
 ```
 
 Optional: `FORGE_SKIP_STRUCTURAL_TOOLS=1` when probes are not installed in CI.
+Optional: `FORGE_SKIP_PSTACK=1` to skip copying pstack skills during `forge install`.

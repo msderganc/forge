@@ -12,6 +12,10 @@ Before spawning, read **`templates/forge-agent-roster.md`**. Use only roster rol
 
 See [templates/graphify-contract.md](graphify-contract.md). Refresh at **ship** only (`forge ship --step 1`). Optional during skills: read `graphify-out/GRAPH_REPORT.md` or use `graphify query` / `path` / `explain`.
 
+## pstack
+
+Optional companion skills from [pstack](https://github.com/cursor/plugins/tree/main/pstack/skills). Canonical map: [templates/pstack-contract.md](pstack-contract.md). Named Forge skills always win. `forge install` copies an allowlist by default; skip with `--skip-pstack`. If pstack is not installed, skip.
+
 ## Progress and continuation
 
 The orchestrator prints a **Create Phase Todos** JSON block each step — mirror it immediately (e.g. `update_plan`). On step 1, complete **SESSION OPT-IN** first if shown.

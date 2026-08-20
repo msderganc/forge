@@ -18,6 +18,10 @@ See `templates/scope-size-model.md` and `templates/workflow-skill-preamble.md` f
 
 Shared runtime: [templates/workflow-skill-preamble.md](../../templates/workflow-skill-preamble.md).
 
+## pstack companion
+
+Optionally reach for `/swarm`, `/tdd`, `/typescript-best-practices`, and `/unslop`. Canonical map: `templates/pstack-contract.md`. If pstack is not installed, skip.
+
 ## Simplicity
 
 Preamble § Simplicity (YAGNI). Smallest diff per task; escalate scope creep—no drive-by refactors.

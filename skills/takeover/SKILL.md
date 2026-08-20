@@ -18,6 +18,10 @@ See `templates/scope-size-model.md` and `templates/workflow-skill-preamble.md` f
 
 Shared runtime: [templates/workflow-skill-preamble.md](../../templates/workflow-skill-preamble.md).
 
+## pstack companion
+
+Optionally run `/recall` for a chat-history brief vs Forge session files. Canonical map: `templates/pstack-contract.md`. If pstack is not installed, skip.
+
 <invoke cmd="forge takeover" />
 
 | Argument | Purpose |

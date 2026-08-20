@@ -19,6 +19,10 @@ See `templates/scope-size-model.md` and `templates/workflow-skill-preamble.md` f
 
 Shared runtime: [templates/workflow-skill-preamble.md](../../templates/workflow-skill-preamble.md).
 
+## pstack companion
+
+If the app has no scripted prove-it path, optionally run `/create-verification-skill`. Canonical map: `templates/pstack-contract.md`. If pstack is not installed, skip.
+
 ## Modes
 
 - **`run`** (default): 6-step detect → execute → analyze → report

@@ -27,6 +27,10 @@ Routing and sketch vs design boundary: [AGENTS.md](../../AGENTS.md) § Process-f
 
 Shared runtime: [templates/workflow-skill-preamble.md](../../templates/workflow-skill-preamble.md).
 
+## pstack companion
+
+Optionally reach for `/how` and `/why` beside Graphify. Canonical map: `templates/pstack-contract.md`. If pstack is not installed, skip.
+
 ## Simplicity
 
 Preamble § Simplicity (YAGNI). Separate must-have from nice-to-have; defer speculative scope unless the user opts in.

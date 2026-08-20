@@ -33,7 +33,7 @@ A few things carry across every skill:
 - **Sub-agents report progress.** Dispatched agents write heartbeats so a parent chat isn't silent mid-task.
 - **Every run leaves an audit trail** in `memory/<skill>-runs.jsonl` (last 30 entries).
 
-Graphify, Beads, and structural-quality probes (knip, madge, jscn, pyscn, skylos) are optional add-ons that several skills touch — they're covered together in [Integrations](#integrations) rather than repeated here.
+Graphify, Beads, pstack, and structural-quality probes (knip, madge, jscn, pyscn, skylos) are optional add-ons that several skills touch — they're covered together in [Integrations](#integrations) rather than repeated here.
 
 ---
 
@@ -69,7 +69,7 @@ forge install --codex
 
 `--cursor` installs the Cursor plugin and bundles workflow skills into it directly. `--codex` installs skills under `~/.codex/skills/forge/`. `--claude` installs commands under `~/.claude/commands/forge/` and wires up Graphify hooks. Useful flags: `--ref`, `--repo-url`, `--cursor-dir`, `--claude-dir`, `--codex-dir`.
 
-`forge install` also sets up structural-quality probes and prints Graphify onboarding hints — see [Integrations](#integrations) for what those do and how to skip them.
+`forge install` also copies allowlisted pstack skills, sets up structural-quality probes, and prints Graphify onboarding hints — see [Integrations](#integrations) for what those do and how to skip them.
 
 Running from Windows installs to Windows app locations; running from WSL installs to WSL locations.
 
@@ -355,6 +355,16 @@ Graphify indexes the repo into `graphify-out/` (god nodes, communities) so agent
 
 Full guide: [`docs/graphify.md`](docs/graphify.md).
 
+### pstack — optional agent skills (poteto)
+
+[pstack](https://github.com/cursor/plugins/tree/main/pstack/skills) is a Cursor
+marketplace plugin. `forge install` downloads the allowlisted skills from
+[cursor/plugins](https://github.com/cursor/plugins) **by default** (not the marketplace).
+Forge does not vendor these skills into the forge-next source tree. Skip with `--skip-pstack` or
+`FORGE_SKIP_PSTACK=1`. When the skills are present, workflow skills may
+optionally reach for pstack companions (see [`docs/pstack.md`](docs/pstack.md));
+if they are missing, Forge continues unchanged. pstack is not a `/forge:` command.
+
 ### Beads — issue tracking
 
 [Beads](https://github.com/steveyegge/beads) (`bd` CLI) can sync epics, findings, tasks, and dependencies with Forge memory and handoffs. Without it, prompts use memory files and sequential IDs. Design records `beads_available` on startup; nothing hard-requires Beads.
@@ -502,6 +512,7 @@ Outside the apps, call `forge <subcommand>` with a space — same engine as any 
 | `FORGE_SKIP_AUTO_CLOSE=1` | Disable step-1 auto-close of superseded sessions |
 | `FORGE_SKIP_SUBAGENT_LIFECYCLE=1` | Disable Cursor subagent lifecycle/progress reminders |
 | `FORGE_SKIP_STRUCTURAL_TOOLS=1` | Skip structural probe install and runs |
+| `FORGE_SKIP_PSTACK=1` | Skip copying allowlisted pstack skills during `forge install` |
 | `FORGE_SKILL_ENGINE=0` | Force legacy per-skill orchestrator bodies |
 
 Full list: [`docs/environment.md`](docs/environment.md). Declarative manifests: [`docs/declarative-skills.md`](docs/declarative-skills.md). Ceremony: [`docs/ceremony.md`](docs/ceremony.md).
