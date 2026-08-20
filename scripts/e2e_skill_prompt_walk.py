@@ -136,7 +136,8 @@ PROMPT_MARKERS: dict[str, dict[int, list[str]]] = {
     },
     "plan:ceremony-light": {
         1: ["ceremony", "active", "light", "no confirmation"],
-        2: ["architect", "orient"],
+        2: ["planner", "plan"],
+        3: ["handoff"],
     },
     "plan:ceremony-cli-comprehensive": {
         1: ["ceremony", "active", "comprehensive", "no confirmation"],
@@ -649,7 +650,14 @@ def _prepare_implement(step: int, state_path: Path) -> None:
 
 
 def _prepare_plan(step: int, state_path: Path) -> None:
-    if step >= 7:
+    max_step = 7
+    if state_path.is_file():
+        try:
+            data = json.loads(state_path.read_text(encoding="utf-8"))
+            max_step = int(data.get("max_step") or 7)
+        except (OSError, json.JSONDecodeError, TypeError, ValueError):
+            max_step = 7
+    if step >= max_step:
         _inject_plan_markers_cleared(state_path)
 
 
@@ -737,7 +745,7 @@ def main() -> int:
         ("sketch", 3, [], None, None),
         ("ship", 1, [], None, None),
         ("ux-review", 6, [], None, None),
-        ("plan", 7, ["--ceremony", "light", "--force"], None, _prepare_plan),
+        ("plan", 7, ["--ceremony", "medium", "--force"], None, _prepare_plan),
         ("implement", 8, [], None, _prepare_implement),
         ("code-review", 6, ["--mode", "deep"], None, None),
         ("takeover", 6, ["--goal", "e2e prompt-walk ship-ready check"], None, None),
@@ -766,10 +774,10 @@ def main() -> int:
         ),
         (
             "plan",
-            2,
+            3,
             ["--force", "--ceremony", "light"],
             "plan:ceremony-light",
-            None,
+            _prepare_plan,
         ),
         (
             "plan",

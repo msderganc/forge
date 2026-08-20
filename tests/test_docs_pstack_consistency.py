@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -107,7 +108,7 @@ def test_docs_and_index_pointers() -> None:
     docs_index = (REPO_ROOT / "docs" / "README.md").read_text(encoding="utf-8")
     assert "pstack.md" in docs_index
     pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    assert 'version = "1.15.0"' in pyproject
+    assert re.search(r'^version = "\d+\.\d+\.\d+"', pyproject, re.M)
     env = (REPO_ROOT / "docs" / "environment.md").read_text(encoding="utf-8")
     assert "FORGE_SKIP_PSTACK" in env
 

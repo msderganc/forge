@@ -13,7 +13,7 @@ from __future__ import annotations
 import importlib
 import os
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Any, Callable
 
@@ -114,19 +114,19 @@ def run_skill(skill: str, argv: list[str], *, repo_root: Path | None = None) -> 
 
     variant_name = _select_variant_name(manifest, args, state=None)
     view = _effective_view(manifest, variant_name)
-    max_step = view.max_step
-    apply_resolved_workflow_step(args, skill, max_step, variant=variant_name)
+    parser_view_max = view.max_step
+    apply_resolved_workflow_step(args, skill, parser_view_max, variant=variant_name)
 
     if manifest.pre_run:
         resolve_callable(manifest.pre_run)(args=args, manifest=manifest, repo_root=root)
 
-    if validate_step_or_complete(args.step, max_step, skill):
+    if validate_step_or_complete(args.step, parser_view_max, skill):
         return 0
 
     step = int(args.step)
 
     if step == 1:
-        state, state_path = _bootstrap_step1(skill, max_step, args, root)
+        state, state_path = _bootstrap_step1(skill, parser_view_max, args, root)
     else:
         state, state_path = _load_step_state(skill, step, args)
         guard_code = _resume_mode_guards(skill, state, args)
@@ -136,12 +136,6 @@ def run_skill(skill: str, argv: list[str], *, repo_root: Path | None = None) -> 
     # Re-select variant from persisted mode once state is loaded.
     variant_name = _select_variant_name(manifest, args, state=state)
     view = _effective_view(manifest, variant_name)
-    max_step = view.max_step
-    state.max_step = max_step
-
-    step_spec = _step_spec_from_view(view, step, skill)
-    phase_names = {s.step: s.phase for s in view.steps}
-    phase_todos = {s.step: [dict(t) for t in s.todos] for s in view.steps}
 
     _apply_flag_values_to_state(state, manifest.cli_flags, args, step=step)
     # Persist CLI overrides that gates/vars read (docs override, etc.).
@@ -150,8 +144,23 @@ def run_skill(skill: str, argv: list[str], *, repo_root: Path | None = None) -> 
         state.custom.setdefault("mode", variant_name)
     # Dual-axis: mode selects the variant view; ceremony overlays depth/gates.
     resolve_and_persist_ceremony(state, args, step=step)
+    _sync_plan_mode_from_ceremony(skill, state)
+    view = _overlay_ceremony_view(skill, view, state, step)
+    max_step = view.max_step
+    state.max_step = max_step
+    step, collapse_err = _collapse_requested_step(skill, state, step)
+    if collapse_err:
+        print(collapse_err, file=sys.stderr)
+        return 1
     state.current_step = step
     save_state(state, state_path)
+
+    if validate_step_or_complete(step, max_step, skill):
+        return 0
+
+    step_spec = _step_spec_from_view(view, step, skill)
+    phase_names = {s.step: s.phase for s in view.steps}
+    phase_todos = {s.step: [dict(t) for t in s.todos] for s in view.steps}
 
     variables = _build_step_variables(
         step_spec, state, root, manifest, step=step, state_path=state_path
@@ -163,18 +172,18 @@ def run_skill(skill: str, argv: list[str], *, repo_root: Path | None = None) -> 
         state.custom.pop("ceremony_source", None)
         state.custom.pop("ceremony_rationale", None)
         resolve_and_persist_ceremony(state, args, step=1)
-        # Plan narrative mode must track the refreshed ceremony band.
-        if skill == "plan":
-            band = normalize_ceremony(
-                str(state.custom.get("ceremony"))
-                if state.custom.get("ceremony") is not None
-                else None
-            )
-            if band:
-                from scripts.shared.ceremony import map_to_plan_mode
-
-                state.custom["plan_mode"] = map_to_plan_mode(band)
+        _sync_plan_mode_from_ceremony(skill, state)
+        view = _effective_view(manifest, variant_name)
+        view = _overlay_ceremony_view(skill, view, state, step)
+        max_step = view.max_step
+        state.max_step = max_step
+        step_spec = _step_spec_from_view(view, step, skill)
+        phase_names = {s.step: s.phase for s in view.steps}
+        phase_todos = {s.step: [dict(t) for t in s.todos] for s in view.steps}
         save_state(state, state_path)
+        variables = _build_step_variables(
+            step_spec, state, root, manifest, step=step, state_path=state_path
+        )
     append_body = str(variables.pop("__APPEND__", "") or "")
     phase_label = str(variables.pop("__PHASE_LABEL__", "") or "") or step_spec.phase
     # Vars may re-select mode (evaluate detect_mode); refresh view if needed.
@@ -182,6 +191,7 @@ def run_skill(skill: str, argv: list[str], *, repo_root: Path | None = None) -> 
     if refreshed and refreshed != variant_name and manifest.variants and refreshed in manifest.variants:
         variant_name = refreshed
         view = _effective_view(manifest, variant_name)
+        view = _overlay_ceremony_view(skill, view, state, step)
         max_step = view.max_step
         state.max_step = max_step
         step_spec = _step_spec_from_view(view, step, skill)
@@ -528,6 +538,100 @@ def select_mode_and_ceremony(
             state, args, step=int(state.current_step or 1)
         )
     return mode, str(ceremony)
+
+
+def _sync_plan_mode_from_ceremony(skill: str, state: SkillState) -> None:
+    """Keep plan narrative mode aligned with the active ceremony band."""
+    if skill != "plan":
+        return
+    band = normalize_ceremony(
+        str(state.custom.get("ceremony"))
+        if state.custom.get("ceremony") is not None
+        else None
+    )
+    if not band:
+        return
+    from scripts.shared.ceremony import map_to_plan_mode
+
+    state.custom["plan_mode"] = map_to_plan_mode(band)
+
+
+# Original plan step → (collapsed step, phase). Architect / review / Decide /
+# docs-planning are omitted on light.
+_PLAN_LIGHT_KEEP: dict[int, tuple[int, str]] = {
+    1: (1, "Frame+Orient"),
+    3: (2, "Act"),
+    7: (3, "Handoff"),
+}
+
+
+def _should_collapse_plan_light(state: SkillState, step: int) -> bool:
+    """Collapse a fresh or already-collapsed light plan; leave in-flight 7-step runs."""
+    if state.custom.get("spine_collapse") == "plan-light":
+        return True
+    if int(state.max_step or 0) == 3:
+        return True
+    return step == 1 and int(state.last_completed_step or 0) == 0
+
+
+def _plan_light_collapsed_view(view: _EffectiveView) -> _EffectiveView:
+    orig_to_new = {orig: new for orig, (new, _phase) in _PLAN_LIGHT_KEEP.items()}
+    steps: list[ManifestStep] = []
+    for spec in view.steps:
+        mapped = _PLAN_LIGHT_KEEP.get(spec.step)
+        if mapped is None:
+            continue
+        new_step, phase = mapped
+        steps.append(replace(spec, step=new_step, phase=phase))
+    steps.sort(key=lambda item: item.step)
+    gates: list[ManifestGate] = []
+    for gate in view.gates:
+        remapped = tuple(orig_to_new[s] for s in gate.steps if s in orig_to_new)
+        if remapped:
+            gates.append(replace(gate, steps=remapped))
+    return _EffectiveView(max_step=3, steps=tuple(steps), gates=tuple(gates))
+
+
+def _collapse_requested_step(
+    skill: str, state: SkillState, step: int
+) -> tuple[int, str | None]:
+    """Map 7-step muscle memory onto plan+light numbering.
+
+    Collapsed steps are 1–3. ``--step 7`` is Handoff. Steps 4–6 were skipped.
+    """
+    if skill != "plan" or state.custom.get("spine_collapse") != "plan-light":
+        return step, None
+    if step <= 3:
+        return step, None
+    if step == 7:
+        print(
+            "NOTE: plan --ceremony light remaps --step 7 to Handoff (--step 3)",
+            file=sys.stderr,
+        )
+        return 3, None
+    return step, (
+        f"ERROR: plan --ceremony light is 3 steps "
+        f"(Frame+Orient / Act / Handoff). Step {step} is skipped. "
+        "Use --step 2 (write the plan) or --step 3 (handoff)."
+    )
+
+
+def _overlay_ceremony_view(
+    skill: str,
+    view: _EffectiveView,
+    state: SkillState,
+    step: int,
+) -> _EffectiveView:
+    """Apply ceremony onto the mode-selected view (plan+light collapses steps)."""
+    band = normalize_ceremony(
+        str(state.custom.get("ceremony"))
+        if state.custom.get("ceremony") is not None
+        else None
+    )
+    if skill == "plan" and band == "light" and _should_collapse_plan_light(state, step):
+        state.custom["spine_collapse"] = "plan-light"
+        return _plan_light_collapsed_view(view)
+    return view
 
 
 def _effective_view(manifest: Manifest, variant_name: str | None) -> _EffectiveView:

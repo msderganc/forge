@@ -20,7 +20,11 @@ Optional companion skills from [pstack](https://github.com/cursor/plugins/tree/m
 
 The orchestrator prints a **Create Phase Todos** JSON block each step — mirror it immediately (e.g. `update_plan`). On step 1, complete **SESSION OPT-IN** first if shown.
 
-Multi-step skills: do not stop between phases. See [templates/codex-runtime.md](codex-runtime.md) for continuation protocol and parallel dispatch.
+Honor ceremony as a duration hint. Global guidance: light **5–10 min**, medium **20–40 min**, detailed **45–90 min**, comprehensive **1–2 h**. Stop or escalate at the top of the range. Per-skill floors: [`docs/ceremony.md`](../docs/ceremony.md).
+
+**Light:** after the skill’s primary artifact exists, present the handoff (or stop). Do not walk remaining unused steps. Plan light is three slots: Frame+Orient → Act → Handoff.
+
+**Medium and above:** do not stop between phases. See [templates/codex-runtime.md](codex-runtime.md) for continuation protocol and parallel dispatch.
 
 ## Execution order
 

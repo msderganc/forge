@@ -98,10 +98,11 @@ as the primary source.
 
 ## Process spine and ceremony
 
-Aligned skills share one spine (Frame → … → Handoff). Depth is a binding
-**ceremony** band (`light` → `comprehensive`), selected via `--ceremony` or
-estimate, orthogonal to skill **mode** variants (`evaluate` pre/post, `test`
-run/flows). See [`ceremony.md`](ceremony.md) and
+Aligned skills share one spine (Frame → … → Handoff). Ceremony is a binding
+**job** (`light` → `comprehensive`), selected via `--ceremony` or estimate,
+orthogonal to skill **mode** variants (`evaluate` pre/post, `test` run/flows).
+The runner overlays ceremony on the mode-selected view (gate softening; **plan
++ light** collapses 7 → 3 steps). See [`ceremony.md`](ceremony.md) and
 [`templates/skill-process-spine.md`](../templates/skill-process-spine.md).
 
 ## Related

@@ -8,14 +8,15 @@ See also `docs/ceremony.md` and `templates/scope-size-model.md`.
 
 Plan depth is **`--ceremony`**: `light` | `medium` | `detailed` | `comprehensive`.
 
-| Band | Best for | Narrative depth |
-|------|----------|-----------------|
-| `light` | Small or uncertain work (preferred starting point) | Concise sections, same task rigor |
-| `medium` | Clear multi-file / moderate risk | Full governance sections |
-| `detailed` | Multi-module, contracts, richer risk/docs | Deeper architecture and waves |
-| `comprehensive` | Maximum deepen — use sparingly | Full deepen + extra analysis |
+| Band | Job | Runtime | Narrative depth | Guidance |
+|------|-----|---------|-----------------|----------|
+| `light` | Produce | **3 slots:** Frame+Orient → Act → Handoff (no Architect dispatch, 4-role review, pre-mortem, or docs-planning phase) | Concise sections, same task rigor | 5–10 min |
+| `medium` | Pipeline | Full 7 slots, one pass, Decide ack | Full governance sections | 20–40 min |
+| `detailed` | Handoff-grade | Full 7 + independent review | Deeper architecture and waves | 45–90 min |
+| `comprehensive` | Adversarial | Full 7 + extra deepen | Full deepen + extra analysis | 1–2 h |
 
-Bias **down** when unsure. Prefer `light`.
+Bias **down** when unsure. Prefer `light`. Times are advisory — stop or
+escalate at the top of the range.
 
 Internally, plan still stores `plan_mode` for template contracts
 (`light` → `lite`, other bands → `default`). Agents and CLI should speak

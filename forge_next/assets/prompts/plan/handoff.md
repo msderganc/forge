@@ -19,7 +19,7 @@ Render the skill completion dashboard per `templates/dashboard.md`.
 The orchestrator checks `{{PLAN_FILE}}` for any remaining
 `<!-- FORGE_SKELETON: ... -->` markers. If any are present, the workflow does
 **not** complete and you'll see a warning listing the unfilled sections —
-fill them and re-run step 7.
+fill them and re-run this Handoff step.
 
 ## Suggested Next
 - `evaluate --mode pre` (optional: review plan before implementing)

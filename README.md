@@ -23,7 +23,7 @@ On disk, Codex skill folders use hyphens (`forge-diagnose/`) because `:` isn't v
 
 ## Overview
 
-Forge skills share one process spine — Frame, Orient, Deepen, Decide, Act, Verify, Handoff — and a `--ceremony` flag (`light` to `comprehensive`) that scales how much of that spine runs. See [`docs/ceremony.md`](docs/ceremony.md).
+Forge skills share one process spine — Frame, Orient, Deepen, Decide, Act, Verify, Handoff — and a `--ceremony` flag (`light` to `comprehensive`) that selects a **job** (Produce / Pipeline / Handoff-grade / Adversarial), not four volumes of the same spine. **Plan light collapses to three steps** (Frame+Orient → Act → Handoff). See [`docs/ceremony.md`](docs/ceremony.md).
 
 A few things carry across every skill:
 
@@ -172,7 +172,7 @@ Turns an approved direction into a concrete implementation plan: waves, tasks, a
 
 **Artifacts:** plan file under `memory/plans/`; `memory/planner.md`.
 
-**Notable flags:** `--quick`; `--ceremony light|medium|detailed|comprehensive`; `--save-ceremony-preference`.
+**Notable flags:** `--quick`; `--ceremony light|medium|detailed|comprehensive`; `--save-ceremony-preference`. Light collapses the run to three steps.
 
 **Default handoff:** [evaluate](#evaluate) `--mode pre` (implement is a common alternative).
 
@@ -485,6 +485,8 @@ After `forge install --cursor`, the plugin under `~/.cursor/plugins/local/forge/
 | **1.12.1** | Expose `--ceremony` on the `forge` CLI and ask plan for light/medium/detailed/comprehensive (not legacy normal/lite) |
 | **1.12.2** | Plan CLI `--ceremony` skips re-prompt and syncs `plan_mode`; e2e asserts outer CLI ceremony flags |
 | **1.12.3** | Add `scripts/e2e_cli_skill_matrix.py` — 3+ forge-CLI scenarios per skill (ceremony/mode/reject) |
+| **1.16.0** | Plan `--ceremony light` collapses to 3 steps; ceremony bands are jobs with advisory times |
+| **1.15.0** | `forge install` copies allowlisted pstack companion skills (skip with `--skip-pstack`) |
 | **1.14.0** | Claude Code: `using-forge` meta-skill + `forge-*` skills under `~/.claude/skills/` for auto-routing (plan/implement/…) |
 | **1.13.2** | Harden Beads install probe (UTF-8 decode; multi-token `FORGE_BD_COMMAND` display) |
 | **1.13.1** | Install/doctor UX: emoji sections, structural-tool ✓/✗ marks, surface Beads (`bd`) availability |

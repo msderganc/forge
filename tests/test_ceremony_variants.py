@@ -39,3 +39,16 @@ def test_design_has_frame_and_handoff() -> None:
     labels = [s.phase for s in m.steps]
     assert labels[0].startswith("Frame")
     assert labels[-1].startswith("Handoff")
+
+
+def test_preamble_and_using_forge_honor_light_stop() -> None:
+    preamble = (REPO / "templates" / "workflow-skill-preamble.md").read_text(
+        encoding="utf-8"
+    )
+    assert "5–10 min" in preamble
+    assert "Honor ceremony as a duration hint" in preamble
+    using = (
+        REPO / "integrations" / "claude" / "skills" / "using-forge" / "SKILL.md"
+    ).read_text(encoding="utf-8")
+    assert "do not auto-continue" in using.lower()
+    assert "Frame+Orient" in using

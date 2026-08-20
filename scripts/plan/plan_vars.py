@@ -41,7 +41,7 @@ def ensure_plan_initialized(
 ) -> None:
     """Idempotent step-1 setup: handoff, plan file skeleton, mode."""
     if state.custom.get("plan_file"):
-        hydrate_legacy_mode(state)
+        hydrate_legacy_mode(state.custom)
         return
 
     handoff_content = consume_handoff("design")
@@ -228,7 +228,12 @@ def build_variables(
         block = state.custom.pop("_mode_selection_block", "") or ""
         if block:
             append += "\n\n" + block
-    if step == 2 and state_path is not None:
+    if step == 2 and state.custom.get("spine_collapse") == "plan-light":
+        append += (
+            "\n\n**Light ceremony:** Architect dispatch was skipped. "
+            "Fill the Architecture Overview in the plan file yourself while writing tasks.\n"
+        )
+    elif step == 2 and state_path is not None:
         # Defer inject until after render via __APPEND__ on empty base —
         # inject needs the rendered body, so use gate instead.
         state.custom["_needs_arch_probes"] = True
@@ -267,7 +272,8 @@ def exit_if_plan_skeleton_incomplete(
         "markers and need to be filled in before the plan is ready:\n\n"
         + "\n".join(f"- {s}" for s in unfilled)
         + f"\n\nFile: `{plan_file}`\n\n"
-        "Fill these sections, then re-run step 7."
+        "Fill these sections, then re-run step "
+        f"{int(state.max_step or 7)}."
     )
     state.custom["_append_body"] = warning
     state.custom["_await_same_step"] = True

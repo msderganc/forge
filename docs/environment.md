@@ -70,7 +70,7 @@ Aligned pipeline skills accept a shared depth flag (orthogonal to skill-specific
 
 | Flag | Values | Effect |
 |------|--------|--------|
-| `--ceremony` | `light` \| `medium` \| `detailed` \| `comprehensive` | Binding ceremony band for the session; wins over estimate; persisted on state |
+| `--ceremony` | `light` \| `medium` \| `detailed` \| `comprehensive` | Binding job for the session; wins over estimate; persisted on state. **Plan light** collapses to 3 steps. |
 | `--effort` | skill-specific (e.g. code-review `light`/`standard`/`thorough`) | Legacy alias → mapped into ceremony where supported |
 
 Examples: `forge design --ceremony light --step 1`, `forge evaluate --mode pre --ceremony light --step 1`, `forge test --mode flows --ceremony medium --step 1`.
