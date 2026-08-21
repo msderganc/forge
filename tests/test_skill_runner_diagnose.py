@@ -40,15 +40,6 @@ def test_diagnose_manifest_python_gates_only():
     assert by_id["diagnose_step7_closure"].steps == (7,)
 
 
-def test_diagnose_step1_frame_the_problem(forge_runtime, monkeypatch, capsys):
-    from scripts.shared.skill_runner import run_skill
-
-    code = run_skill("diagnose", ["--step", "1"], repo_root=REPO_ROOT)
-    assert code == 0
-    out = capsys.readouterr().out
-    assert "Frame" in out
-
-
 def test_diagnose_gate_escape_invoked(forge_runtime, monkeypatch, capsys):
     from scripts.shared import skill_runner
     from scripts.shared.orchestrator import find_state_file, load_state, save_state

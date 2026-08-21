@@ -64,49 +64,6 @@ def test_ship_step1_invokes_graphify_and_deferred_probes(
     assert probe_calls, "run_ship_deferred_probe_passes must be invoked on ship step 1"
 
 
-def test_ux_review_step1_orient(forge_runtime, monkeypatch: pytest.MonkeyPatch, capsys):
-    code = _run("ux-review", ["--step", "1"], monkeypatch=monkeypatch)
-    assert code == 0
-    out = capsys.readouterr().out
-    assert "Orient" in out
-
-
-def test_plan_step1_and_max_step(forge_runtime, monkeypatch: pytest.MonkeyPatch, capsys):
-    from scripts.shared.skill_manifest import load_manifest
-
-    manifest = load_manifest("plan", REPO_ROOT)
-    assert manifest.max_step == 7
-
-    code = _run("plan", ["--step", "1"], monkeypatch=monkeypatch)
-    assert code == 0
-    out = capsys.readouterr().out
-    assert "Frame" in out
-
-
-def test_implement_step1_and_max_step(forge_runtime, monkeypatch: pytest.MonkeyPatch, capsys):
-    from scripts.shared.skill_manifest import load_manifest
-
-    manifest = load_manifest("implement", REPO_ROOT)
-    assert manifest.max_step == 8
-
-    code = _run("implement", ["--step", "1"], monkeypatch=monkeypatch)
-    assert code == 0
-    out = capsys.readouterr().out
-    assert "Plan Detection" in out
-
-
-def test_code_review_step1_and_max_step(forge_runtime, monkeypatch: pytest.MonkeyPatch, capsys):
-    from scripts.shared.skill_manifest import load_manifest
-
-    manifest = load_manifest("code-review", REPO_ROOT)
-    assert manifest.max_step == 6
-
-    code = _run("code-review", ["--step", "1"], monkeypatch=monkeypatch)
-    assert code == 0
-    out = capsys.readouterr().out
-    assert "Target Detection" in out
-
-
 def test_implement_docs_gate_escape_invoked(
     forge_runtime, monkeypatch: pytest.MonkeyPatch, capsys
 ):

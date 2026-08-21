@@ -5,8 +5,6 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-import pytest
-
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 ABSENT_TOKENS = ("automate-me", "setup-pstack", "poteto-mode")
@@ -129,14 +127,16 @@ def test_absent_tokens_not_in_forge_docs() -> None:
             assert token not in blob, f"forbidden token {token!r} leaked into Forge pstack docs"
 
 
-@pytest.mark.parametrize(
-    "path,tokens",
-    SKILL_COMPANION_TOKENS,
-    ids=[p.relative_to(REPO_ROOT).as_posix() for p, _ in SKILL_COMPANION_TOKENS],
-)
-def test_skill_companion_tokens(path: Path, tokens: tuple[str, ...]) -> None:
-    text = path.read_text(encoding="utf-8")
-    for token in tokens:
-        assert token in text, f"{path.relative_to(REPO_ROOT)} missing {token!r}"
-    assert "templates/pstack-contract.md" in text
-    assert "If pstack is not installed, skip" in text
+def test_skill_companion_tokens() -> None:
+    missing: list[str] = []
+    for path, tokens in SKILL_COMPANION_TOKENS:
+        text = path.read_text(encoding="utf-8")
+        rel = path.relative_to(REPO_ROOT)
+        for token in tokens:
+            if token not in text:
+                missing.append(f"{rel} missing {token!r}")
+        if "templates/pstack-contract.md" not in text:
+            missing.append(f"{rel} missing pstack-contract.md pointer")
+        if "If pstack is not installed, skip" not in text:
+            missing.append(f"{rel} missing skip-if-uninstalled rule")
+    assert not missing, "pstack companion gaps:\n" + "\n".join(missing)

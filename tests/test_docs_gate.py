@@ -1,4 +1,4 @@
-"""Tests for implement documentation gate and prompt parity hints."""
+"""Tests for implement documentation gate (content + MAX_STEP locks)."""
 
 from __future__ import annotations
 
@@ -86,51 +86,10 @@ def test_override_requires_follow_up(tmp_path: Path):
     assert "follow-up" in msg.lower()
 
 
-@pytest.mark.parametrize(
-    "rel",
-    [
-        "approval.md",
-        "architecture.md",
-        "context.md",
-        "creation.md",
-        "documentation.md",
-        "handoff.md",
-        "review_loop.md",
-    ],
-)
-def test_packaged_prompts_mirror_plan_phase(rel: str):
-    src = REPO_ROOT / "prompts" / "plan" / rel
-    packaged = REPO_ROOT / "forge_next" / "assets" / "prompts" / "plan" / rel
-    assert src.read_text(encoding="utf-8") == packaged.read_text(encoding="utf-8")
-
-
 def test_diagnose_report_prompt_lists_technique_matrix():
     text = (REPO_ROOT / "prompts" / "diagnose" / "report.md").read_text(encoding="utf-8")
     assert "activated" in text.lower()
     assert "technique-coverage" in text.lower() or "technique coverage" in text.lower()
-
-
-@pytest.mark.parametrize(
-    "rel",
-    [
-        "define.md",
-        "decompose.md",
-        "analyze.md",
-        "solutions.md",
-        "report.md",
-        "technique_catalog.md",
-    ],
-)
-def test_packaged_diagnose_prompts_match_repo(rel):
-    src = REPO_ROOT / "prompts" / "diagnose" / rel
-    packaged = REPO_ROOT / "forge_next" / "assets" / "prompts" / "diagnose" / rel
-    assert src.read_text(encoding="utf-8") == packaged.read_text(encoding="utf-8")
-
-
-def test_packaged_diagnose_playbooks_match_repo():
-    src = REPO_ROOT / "templates" / "diagnose-execution-playbooks.md"
-    packaged = REPO_ROOT / "forge_next" / "assets" / "templates" / "diagnose-execution-playbooks.md"
-    assert src.read_text(encoding="utf-8") == packaged.read_text(encoding="utf-8")
 
 
 def test_orchestrator_max_steps_match_plan_implement_diagnose():

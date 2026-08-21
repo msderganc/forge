@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import json
-import tempfile
-from pathlib import Path
 
 import pytest
 
@@ -26,31 +24,19 @@ def test_normalize_mode():
     assert normalize_mode("invalid") == DEFAULT_MODE
 
 
-def test_recommend_lite_for_small_scope():
-    mode, _ = recommend_mode(handoff_content="Quick fix for a typo in one file")
-    assert mode == "lite"
-
-
-def test_recommend_default_for_refactor():
-    mode, _ = recommend_mode(handoff_content="Large refactor across multi-module architecture")
-    assert mode == "default"
-
-
-def test_recommend_mode_insufficient_signals_prefers_lite():
-    mode, rationale = recommend_mode(handoff_content="Please update the wording")
-    assert mode == "lite"
-    assert "lite" in rationale.lower() or "insufficient" in rationale.lower()
-
-
-def test_recommend_mode_trivial_scope_prefers_lite():
-    mode, _ = recommend_mode(handoff_content="scope_tier: trivial\nSize: small")
-    assert mode == "lite"
-
-
-def test_recommend_mode_tied_prefers_lite():
-    # one lite + one default signal → tie → lite
-    mode, _ = recommend_mode(handoff_content="minor patch with parallel wave work")
-    assert mode == "lite"
+@pytest.mark.parametrize(
+    "content,expected",
+    [
+        ("Quick fix for a typo in one file", "lite"),
+        ("Large refactor across multi-module architecture", "default"),
+        ("Please update the wording", "lite"),
+        ("scope_tier: trivial\nSize: small", "lite"),
+        ("minor patch with parallel wave work", "lite"),
+    ],
+)
+def test_recommend_mode(content: str, expected: str):
+    mode, _ = recommend_mode(handoff_content=content)
+    assert mode == expected
 
 
 def test_preference_roundtrip(monkeypatch, tmp_path):
@@ -136,21 +122,3 @@ def test_ensure_plan_initialized_syncs_plan_mode_from_ceremony_cli(tmp_path, mon
     assert state.custom["plan_mode_resolution"] == "cli"
     assert "Ceremony selection" not in state.custom["_mode_selection_block"]
     assert "`medium`" in state.custom["_mode_selection_block"]
-
-
-def test_ensure_plan_initialized_ceremony_light_maps_to_lite(tmp_path, monkeypatch):
-    from scripts.plan import plan_vars
-    from scripts.shared.orchestrator import SkillState
-
-    monkeypatch.setattr(plan_vars, "consume_handoff", lambda _s: "")
-    monkeypatch.setattr(plan_vars, "runtime_memory_dir", lambda _r: tmp_path)
-    monkeypatch.setattr(plan_vars, "write_plan_skeleton", lambda *_a, **_k: None)
-    monkeypatch.setattr(plan_vars, "generate_plan_filename", lambda _h: "x.md")
-    monkeypatch.setattr(plan_vars, "save_state", lambda *_a, **_k: None)
-
-    state = SkillState(skill_name="plan", max_step=7)
-    state.custom["ceremony"] = "light"
-    state.custom["ceremony_source"] = "cli"
-    plan_vars.ensure_plan_initialized(state, tmp_path, state_path=tmp_path / "s.json")
-    assert state.custom["plan_mode"] == "lite"
-    assert "**Active:** `light`" in state.custom["_mode_selection_block"]

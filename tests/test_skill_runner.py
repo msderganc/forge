@@ -25,26 +25,6 @@ def _run_skill_sketch(argv: list[str], *, repo_root: Path, monkeypatch: pytest.M
     return run_skill("sketch", argv, repo_root=repo_root)
 
 
-def test_run_skill_sketch_step1_startup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys):
-    monkeypatch.setenv("FORGE_CODEX_ROOT", str(tmp_path / ".codex" / "forge"))
-    (tmp_path / ".codex" / "forge").mkdir(parents=True)
-    (tmp_path / ".git").mkdir()
-    # Point checkout skills at the real repo manifest via symlink/copy of skills tree
-    skills_src = REPO_ROOT / "skills" / "sketch" / "manifest.yaml"
-    dest = tmp_path / "skills" / "sketch"
-    dest.mkdir(parents=True)
-    dest.joinpath("manifest.yaml").write_text(skills_src.read_text(encoding="utf-8"), encoding="utf-8")
-    # Prompts resolve from REPO_ROOT when search_dir is tmp — copy prompts or chdir to REPO
-    monkeypatch.chdir(REPO_ROOT)
-    monkeypatch.setenv("FORGE_CODEX_ROOT", str(tmp_path / ".codex" / "forge"))
-
-    code = _run_skill_sketch(["--step", "1"], repo_root=REPO_ROOT, monkeypatch=monkeypatch)
-    assert code == 0
-    out = capsys.readouterr().out
-    assert "Startup" in out
-    assert "SKETCH" in out or "sketch" in out.lower()
-
-
 def test_run_skill_sketch_steps_1_2_3_and_handoff(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys
 ):

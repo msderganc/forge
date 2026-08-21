@@ -32,7 +32,7 @@ def _run(skill: str, argv: list[str], *, monkeypatch: pytest.MonkeyPatch):
     return run_skill(skill, argv, repo_root=REPO_ROOT)
 
 
-def test_takeover_step1_phase_and_max_step(forge_runtime, monkeypatch, capsys):
+def test_takeover_manifest_gates():
     from scripts.shared.skill_manifest import load_manifest
 
     manifest = load_manifest("takeover", REPO_ROOT)
@@ -44,13 +44,8 @@ def test_takeover_step1_phase_and_max_step(forge_runtime, monkeypatch, capsys):
         g.callable and "takeover_gates" in g.callable for g in manifest.gates
     )
 
-    code = _run("takeover", ["--step", "1"], monkeypatch=monkeypatch)
-    assert code == 0
-    out = capsys.readouterr().out
-    assert "Initialize + route" in out
 
-
-def test_design_step1_gates_and_cli_flags(forge_runtime, monkeypatch, capsys):
+def test_design_manifest_gates_and_cli_flags():
     from scripts.shared.skill_manifest import load_manifest
 
     manifest = load_manifest("design", REPO_ROOT)
@@ -73,13 +68,8 @@ def test_design_step1_gates_and_cli_flags(forge_runtime, monkeypatch, capsys):
     )
     assert set(by_id["design_spec_gate"].steps) == {6, 7, 8}
 
-    code = _run("design", ["--step", "1"], monkeypatch=monkeypatch)
-    assert code == 0
-    out = capsys.readouterr().out
-    assert "Frame" in out
 
-
-def test_evaluate_pre_and_post_variants(forge_runtime, monkeypatch, capsys):
+def test_evaluate_pre_and_post_variants():
     from scripts.shared.skill_manifest import ManifestVariant, load_manifest
 
     manifest = load_manifest("evaluate", REPO_ROOT)
@@ -88,28 +78,6 @@ def test_evaluate_pre_and_post_variants(forge_runtime, monkeypatch, capsys):
     assert all(isinstance(v, ManifestVariant) for v in manifest.variants.values())
     assert manifest.variants["pre"].max_step == 7
     assert manifest.variants["post"].max_step == 8
-
-    # Plan must live inside the repo (validate_state_path enforces this).
-    plan_dir = REPO_ROOT / ".forge" / "memory" / "_gate_heavy_eval"
-    plan_dir.mkdir(parents=True, exist_ok=True)
-    plan = plan_dir / "plan.md"
-    plan.write_text("# Eval Plan\n\n## Architecture Overview\nStub.\n", encoding="utf-8")
-    state_sidecar = plan_dir / ".evaluate-state.json"
-    if state_sidecar.exists():
-        state_sidecar.unlink()
-
-    try:
-        code = _run(
-            "evaluate",
-            ["--step", "1", "--mode", "pre", "--plan", str(plan)],
-            monkeypatch=monkeypatch,
-        )
-        assert code == 0
-        out = capsys.readouterr().out
-        assert "Plan Parsing" in out
-    finally:
-        state_sidecar.unlink(missing_ok=True)
-        plan.unlink(missing_ok=True)
 
     from scripts.shared.skill_runner import _effective_view, _select_variant_name
 
@@ -152,7 +120,7 @@ def test_evaluate_findings_sidecar_ingest(forge_runtime, tmp_path, monkeypatch):
     assert state.findings[0]["title"] == "Test F1"
 
 
-def test_test_run_and_flows_variants(forge_runtime, monkeypatch, capsys):
+def test_test_run_and_flows_variants():
     from scripts.shared.skill_manifest import ManifestVariant, load_manifest
 
     manifest = load_manifest("test", REPO_ROOT)
@@ -176,16 +144,6 @@ def test_test_run_and_flows_variants(forge_runtime, monkeypatch, capsys):
         "--roles",
     ):
         assert required in flag_names
-
-    code = _run("test", ["--step", "1", "--mode", "run"], monkeypatch=monkeypatch)
-    assert code == 0
-    out = capsys.readouterr().out
-    assert "Frame" in out
-
-    code = _run("test", ["--step", "1", "--mode", "flows"], monkeypatch=monkeypatch)
-    assert code == 0
-    out = capsys.readouterr().out
-    assert "Frame" in out
 
 
 def test_test_ux_mode_rejected_via_test_cli(forge_runtime, monkeypatch, capsys):

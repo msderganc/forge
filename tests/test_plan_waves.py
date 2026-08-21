@@ -127,3 +127,17 @@ def test_wave_rows_round_trip_preserves_raw_metadata():
     custom = wave_rows_to_custom(rows)
     restored = custom_to_wave_rows(custom)
     assert restored and restored[0].raw.get("priority") == "high"
+
+
+def test_parser_skips_rows_without_numeric_wave():
+    md = """
+| Task | Wave |
+|------|------|
+| Bad | not-a-number |
+| Good | 1 |
+"""
+    total, rows, diag = parse_parallelization_table_with_diagnostics(md)
+    assert total == 1
+    assert len(rows) == 1
+    assert rows[0].task == "Good"
+    assert "table_wave_value_missing" in diag.buckets
