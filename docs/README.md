@@ -15,6 +15,7 @@ User-facing guides for installing and running Forge workflows. Internal design n
 | Doc | Topic |
 |-----|--------|
 | [graphify.md](graphify.md) | Knowledge graph: refresh, hooks, ship-time banner, CI flags |
+| [pstack.md](pstack.md) | Optional pstack companion skills: git install, credit, attach map |
 | [structural-quality.md](structural-quality.md) | knip / madge / pyscn / skylos probes in code-review and evaluate |
 | [pyscn-quality-disposition.md](pyscn-quality-disposition.md) | Forge repo pyscn complexity/clone disposition and CI thresholds |
 | [sessions.md](sessions.md) | Parallel session directories under `.forge/sessions/` |
@@ -22,6 +23,16 @@ User-facing guides for installing and running Forge workflows. Internal design n
 | [declarative-skills.md](declarative-skills.md) | Skill manifests, runner, gate kinds, asset sync, kill-switch |
 | [ceremony.md](ceremony.md) | Shared process spine + ceremony bands; dual-axis mode×ceremony; `--ceremony` |
 | [../templates/skill-process-spine.md](../templates/skill-process-spine.md) | Canonical spine slots and per-skill phase maps |
+
+## What's new (1.15 / 1.16)
+
+Current PyPI is **1.16.1**. These are already in the tree a user gets today:
+
+- **1.16.1 — docs.** README documents all four ceremony jobs on each aligned skill; overlapping tests pruned.
+- **1.16.0 — ceremony-light.** Ceremony bands are jobs (Produce / Pipeline / Handoff-grade / Adversarial), not four volumes of the same spine. Only **plan light** collapses steps (7 → 3: Frame+Orient / Act / Handoff). Other aligned skills keep their step count and honor light as produce-and-stop. `--ceremony` wins over estimate. Mode axes (evaluate `pre`/`post`, test `run`/`flows`) stay orthogonal. Guide: [ceremony.md](ceremony.md).
+- **1.15.0 — pstack companion install.** `forge install` copies an allowlist of optional pstack skills by default. Named Forge skills always win. If pstack is not installed, skip. Canonical map: [`templates/pstack-contract.md`](../templates/pstack-contract.md). Forge does not vendor pstack bodies. Guide: [pstack.md](pstack.md). Skip with `--skip-pstack` or `FORGE_SKIP_PSTACK=1`.
+
+Full version table: [../README.md](../README.md) → *Highlights since 1.0*.
 
 ## Contributors and agents
 

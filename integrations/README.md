@@ -41,6 +41,10 @@ See [`docs/graphify.md`](../docs/graphify.md). Refresh at **ship** (`forge ship 
 | **Codex** | `forge install --codex` or `forge codex-agents --force` |
 | **Cursor** | Repo `.cursor/rules/graphify.mdc` + command bodies |
 
+### pstack (optional agent skills)
+
+[pstack](https://github.com/cursor/plugins/tree/main/pstack/skills) (poteto). `forge install` copies an allowlist from git by default. Skip with `--skip-pstack`. Guide: [`docs/pstack.md`](../docs/pstack.md). Canonical map: [`templates/pstack-contract.md`](../templates/pstack-contract.md).
+
 ### Structural quality probes (optional)
 
 `forge install` installs **knip**, **madge**, and **pyscn** by default for Pass B review in code-review and evaluate (warns on any missing). See [`docs/structural-quality.md`](../docs/structural-quality.md).

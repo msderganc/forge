@@ -20,6 +20,10 @@ Routing: [AGENTS.md](../../AGENTS.md) § Process-first.
 
 Shared runtime: [templates/workflow-skill-preamble.md](../../templates/workflow-skill-preamble.md).
 
+## pstack companion
+
+Optionally reach for `/how`, `/why`, `/teach`, `/blast-radius`, and `/tdd` (simple local fix) beside Graphify. Canonical map: `templates/pstack-contract.md`. If pstack is not installed, skip.
+
 Read `templates/diagnose-execution-playbooks.md` and `prompts/diagnose/_index.md` per phase. Gates and sidecars: [AGENTS.md](../../AGENTS.md) § Diagnose.
 
 ## Simplicity

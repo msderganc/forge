@@ -41,10 +41,28 @@ Forge is in play when any of these are true:
 4. **Run** the skill's required orchestrator (`forge <skill> --step 1` …) before
    freestyle investigation — do not skip the CLI.
 5. **Honor handoffs** at the end of a skill (numbered menu / user pick).
+6. **Honor ceremony.** Light means **produce and stop** — after the artifact
+   exists, present the handoff. Do not auto-continue unused later steps.
 
 Ask the one-time session opt-in only when starting a multi-step Forge skill at
 step 1 and the user has not already chosen full Forge vs informal help in this
 chat. If they choose informal help, stop driving Forge state.
+
+### Ceremony stop rule
+
+`--ceremony` is a job and a duration hint, not “run every remaining phase.”
+
+| Band | Job | Guidance |
+|------|-----|----------|
+| light | Produce | 5–10 min typical; stop when the artifact exists |
+| medium | Pipeline | 20–40 min; one pass with Decide ack |
+| detailed | Handoff-grade | 45–90 min |
+| comprehensive | Adversarial | 1–2 h |
+
+**Light:** do not auto-continue after the artifact exists. Plan light is three
+slots (Frame+Orient → Act → Handoff) — never walk Architect / 4-role review /
+docs-planning just because the medium skill has seven steps. Escalating depth
+requires a higher `--ceremony` (or an explicit user ask), not silent continue.
 
 ## Routing table (parse → skill)
 
@@ -95,6 +113,10 @@ Prefer, in order:
 4. **CLI** `forge <skill> --step 1` as the skill body requires.
 
 Never show raw terminal invocation lines to the user; summarize phases instead.
+
+## pstack companion
+
+Named Forge skills always win. If pstack is present, `/bro` restyles the last agent message in plain language. Canonical map: `templates/pstack-contract.md`. If pstack is not installed, skip.
 
 ## Do not route to Forge when
 

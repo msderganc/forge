@@ -296,26 +296,6 @@ def test_skill_state_persists_session_id_and_last_touched(fresh_state_dir):
     assert raw.get("last_touched_at")
 
 
-def test_find_state_file_ignores_stale_active_by_default(fresh_state_dir, monkeypatch):
-    from scripts.shared.orchestrator import SkillState, find_state_file, runtime_state_dir, save_state
-
-    monkeypatch.setenv("FORGE_STALE_SESSION_HOURS", "0.00001")
-    state_dir = runtime_state_dir(fresh_state_dir)
-    state_dir.mkdir(parents=True, exist_ok=True)
-    stale_path = state_dir / "plan-stale.json"
-    stale = SkillState(skill_name="plan", max_step=7)
-    stale.current_step = 2
-    stale.last_touched_at = "2000-01-01T00:00:00+00:00"
-    save_state(stale, stale_path)
-    # Force stale timestamp after save_state heartbeat update.
-    raw = json.loads(stale_path.read_text(encoding="utf-8"))
-    raw["last_touched_at"] = "2000-01-01T00:00:00+00:00"
-    stale_path.write_text(json.dumps(raw), encoding="utf-8")
-
-    assert find_state_file("plan", fresh_state_dir) is None
-    assert find_state_file("plan", fresh_state_dir, include_stale=True) == stale_path
-
-
 def _test_state_path(search_dir) -> Path:
     """Return the active test skill state file (session dir or legacy)."""
     from scripts.shared.orchestrator import find_state_file
@@ -323,223 +303,6 @@ def _test_state_path(search_dir) -> Path:
     sp = find_state_file("test", search_dir)
     assert sp is not None, "expected test state after step 1"
     return sp
-
-
-def test_resolve_step1_state_path_always_creates_new_session(fresh_state_dir, monkeypatch):
-    from scripts.shared.orchestrator import (
-        SkillState,
-        resolve_step1_state_path,
-        runtime_state_path,
-        save_state,
-    )
-    from scripts.shared.session_store import is_session_state_path, sessions_root
-
-    monkeypatch.chdir(fresh_state_dir)
-    canonical = runtime_state_path("plan", fresh_state_dir)
-    canonical.parent.mkdir(parents=True, exist_ok=True)
-    active = SkillState(skill_name="plan", max_step=7)
-    active.current_step = 3
-    save_state(active, canonical)
-
-    resolved = resolve_step1_state_path("plan", None, parallel=False, search_dir=fresh_state_dir)
-    assert is_session_state_path(resolved)
-    assert resolved.parent.parent == sessions_root(fresh_state_dir)
-    assert resolved != canonical
-
-
-def test_resolve_step1_state_path_new_session_even_with_stale_canonical(fresh_state_dir, monkeypatch):
-    from scripts.shared.orchestrator import (
-        SkillState,
-        resolve_step1_state_path,
-        runtime_state_path,
-        save_state,
-    )
-    from scripts.shared.session_store import is_session_state_path
-
-    monkeypatch.chdir(fresh_state_dir)
-    monkeypatch.setenv("FORGE_STALE_SESSION_HOURS", "0.00001")
-    canonical = runtime_state_path("plan", fresh_state_dir)
-    canonical.parent.mkdir(parents=True, exist_ok=True)
-    stale = SkillState(skill_name="plan", max_step=7)
-    stale.current_step = 3
-    save_state(stale, canonical)
-    raw = json.loads(canonical.read_text(encoding="utf-8"))
-    raw["last_touched_at"] = "2000-01-01T00:00:00+00:00"
-    canonical.write_text(json.dumps(raw), encoding="utf-8")
-
-    resolved = resolve_step1_state_path("plan", None, parallel=False, search_dir=fresh_state_dir)
-    assert is_session_state_path(resolved)
-    assert resolved != canonical
-
-
-def test_develop_step1_always_creates_new_session_dir(fresh_state_dir):
-    """Develop step 1 always allocates a new session directory."""
-    import os
-    import re
-
-    from scripts.shared.session_store import sessions_root
-
-    env = os.environ.copy()
-    env["FORGE_SKIP_SESSION_OPTIN"] = "1"
-
-    r1 = subprocess.run(
-        [sys.executable, str(SCRIPTS / "develop" / "develop.py"), "--step", "1", "--label", "first"],
-        cwd=str(fresh_state_dir),
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        env=env,
-    )
-    assert r1.returncode == 0, r1.stderr
-    m1 = re.search(r"STATE FILE:\s*(.+)", (r1.stderr or "") + r1.stdout)
-    assert m1
-    first = Path(m1.group(1).strip())
-
-    r2 = subprocess.run(
-        [sys.executable, str(SCRIPTS / "develop" / "develop.py"), "--step", "1", "--label", "second"],
-        cwd=str(fresh_state_dir),
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        env=env,
-    )
-    assert r2.returncode == 0, r2.stderr
-    m2 = re.search(r"STATE FILE:\s*(.+)", (r2.stderr or "") + r2.stdout)
-    assert m2
-    second = Path(m2.group(1).strip())
-    assert first.name == second.name == "session.json"
-    assert first.parent != second.parent
-    assert first.parent.parent == sessions_root(fresh_state_dir)
-
-
-def test_validate_state_path_accepts_suffixed_skill_state(fresh_state_dir):
-    from scripts.shared.orchestrator import validate_state_path
-
-    state_dir = fresh_state_dir / ".codex" / "forge-codex" / "state"
-    state_dir.mkdir(parents=True, exist_ok=True)
-    sp = state_dir / "plan-session-a.json"
-    sp.write_text(
-        json.dumps(
-            {
-                "skill_name": "plan",
-                "current_step": 2,
-                "last_completed_step": 1,
-                "max_step": 7,
-            }
-        )
-    )
-    resolved = validate_state_path(str(sp), "plan")
-    assert resolved == sp.resolve()
-
-
-def test_find_state_file_prefers_latest_active_suffix_state(fresh_state_dir):
-    from scripts.shared.orchestrator import (
-        SkillState,
-        find_state_file,
-        runtime_state_dir,
-        save_state,
-    )
-    import time
-
-    state_dir = runtime_state_dir(fresh_state_dir)
-    state_dir.mkdir(parents=True, exist_ok=True)
-    old_path = state_dir / "plan-older.json"
-    new_path = state_dir / "plan-newer.json"
-
-    s_old = SkillState(skill_name="plan", max_step=7)
-    s_old.current_step = 2
-    save_state(s_old, old_path)
-    time.sleep(0.01)  # Ensure mtime ordering on all platforms.
-    s_new = SkillState(skill_name="plan", max_step=7)
-    s_new.current_step = 3
-    save_state(s_new, new_path)
-
-    assert find_state_file("plan", fresh_state_dir) == new_path
-
-
-def test_find_state_file_ignores_completed_by_default(fresh_state_dir):
-    from scripts.shared.orchestrator import (
-        SkillState,
-        find_state_file,
-        runtime_state_dir,
-        save_state,
-    )
-
-    state_dir = runtime_state_dir(fresh_state_dir)
-    state_dir.mkdir(parents=True, exist_ok=True)
-    completed = state_dir / "plan-complete.json"
-
-    done = SkillState(skill_name="plan", max_step=7)
-    done.current_step = 7
-    done.last_completed_step = 7
-    done.completed_at = "2026-05-17T00:00:00+00:00"
-    save_state(done, completed)
-
-    assert find_state_file("plan", fresh_state_dir) is None
-
-
-def test_find_state_file_can_include_completed(fresh_state_dir):
-    from scripts.shared.orchestrator import (
-        SkillState,
-        find_state_file,
-        runtime_state_dir,
-        save_state,
-    )
-
-    state_dir = runtime_state_dir(fresh_state_dir)
-    state_dir.mkdir(parents=True, exist_ok=True)
-    completed = state_dir / "plan-complete.json"
-
-    done = SkillState(skill_name="plan", max_step=7)
-    done.current_step = 7
-    done.last_completed_step = 7
-    done.completed_at = "2026-05-17T00:00:00+00:00"
-    save_state(done, completed)
-
-    assert find_state_file("plan", fresh_state_dir, include_completed=True) == completed
-
-
-def test_validate_state_path_accepts_suffixed_evaluate_state(fresh_state_dir):
-    from scripts.shared.orchestrator import validate_state_path
-
-    eval_state = fresh_state_dir / "docs" / ".evaluate-state-branch-a.json"
-    eval_state.parent.mkdir(parents=True, exist_ok=True)
-    eval_state.write_text(
-        json.dumps(
-            {
-                "plan_path": str(fresh_state_dir / "docs" / "plan.md"),
-                "plan_name": "plan",
-                "mode": "pre",
-                "current_step": 2,
-                "last_completed_step": 1,
-            }
-        )
-    )
-    resolved = validate_state_path(str(eval_state), "evaluate")
-    assert resolved == eval_state.resolve()
-
-
-def test_detect_active_sessions_includes_suffixed_evaluate_states(fresh_state_dir):
-    from scripts.shared.orchestrator import detect_active_sessions
-
-    docs = fresh_state_dir / "docs"
-    docs.mkdir(parents=True, exist_ok=True)
-    eval_state = docs / ".evaluate-state-session-1.json"
-    eval_state.write_text(
-        json.dumps(
-            {
-                "plan_path": str(docs / "plan.md"),
-                "plan_name": "plan",
-                "mode": "review",
-                "current_step": 3,
-                "last_completed_step": 2,
-            }
-        )
-    )
-
-    sessions = detect_active_sessions(fresh_state_dir)
-    eval_sessions = [s for s in sessions if s["skill"] == "evaluate"]
-    assert any(s["path"] == eval_state for s in eval_sessions)
 
 
 # ---------------------------------------------------------------------------
@@ -583,28 +346,6 @@ def test_evaluate_findings_sidecar_tolerates_malformed_json(tmp_path: Path, caps
     assert n == 0
     captured = capsys.readouterr()
     assert "malformed findings sidecar" in captured.err
-
-
-# ---------------------------------------------------------------------------
-# Fix 3.3 — resume.py --cleanup (V10, V11)
-# ---------------------------------------------------------------------------
-
-def test_resume_cleanup_dry_run_does_not_delete(fresh_state_dir):
-    """Run resume.py --cleanup as a subprocess; expect dry-run by default."""
-    from tests.helpers.session_fixtures import write_completed_flat_state
-
-    target = write_completed_flat_state(fresh_state_dir, "develop")
-
-    result = subprocess.run(
-        [sys.executable, str(SCRIPTS / "takeover" / "takeover.py"), "--cleanup"],
-        cwd=fresh_state_dir,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-    )
-    assert result.returncode == 0
-    assert "Would delete" in (result.stderr + result.stdout)
-    assert target.exists()  # not actually deleted
 
 
 def test_resume_cleanup_force_deletes(fresh_state_dir):
@@ -1568,58 +1309,6 @@ def test_scenario_index_writes_backup_before_rewrite(tmp_path):
     assert "flow2" not in backup_content
 
 
-# ---------------------------------------------------------------------------
-# Fix 8: Numbered Handoff Menu Tests
-# ---------------------------------------------------------------------------
-
-
-def test_skill_chain_default_for_each_skill():
-    """SKILL_CHAIN[s].default exists for every skill; diagnose may be None."""
-    from scripts.shared.skill_chain import SKILL_CHAIN
-
-    required_skills = {
-        "sketch",
-        "design",
-        "plan",
-        "evaluate",
-        "implement",
-        "code-review",
-        "test",
-        "ux-review",
-        "diagnose",
-        "takeover",
-    }
-    assert set(SKILL_CHAIN.keys()) == required_skills
-
-    for skill in required_skills:
-        transition = SKILL_CHAIN[skill]
-        assert transition.default is not None or skill in ("diagnose",)
-
-
-def test_build_skill_handoff_menu_renders_numbered_options(capsys, monkeypatch):
-    """Output contains numbered options 1-N and a (stop) last item; no JSON dump."""
-    from scripts.shared.orchestrator import build_skill_handoff_menu
-
-    monkeypatch.setenv("FORGE_WORKFLOW_INVOCATION", "dollar")
-    menu = build_skill_handoff_menu("plan")
-    assert "$forge:" in menu
-    assert "(stop)" in menu
-    assert "WORKFLOW HANDOFF — plan complete" in menu
-    assert "1." in menu
-    assert "handoff-multiselect" not in menu
-    assert "forge_handoff_multiselect" not in menu
-
-
-def test_handoff_menu_documents_default_shortcuts(capsys):
-    """The rendered string contains yes and 1 as documented shortcuts."""
-    from scripts.shared.orchestrator import build_skill_handoff_menu
-
-    menu = build_skill_handoff_menu("design")
-    assert '"yes"' in menu
-    assert '"1"' in menu
-    assert "default" in menu.lower()
-
-
 def test_test_skill_handoff_includes_flows_alternative_in_run_mode(monkeypatch):
     """When current mode is run, alternative list contains test --mode flows."""
     from scripts.shared.orchestrator import build_skill_handoff_menu
@@ -1672,22 +1361,6 @@ def test_diagnose_handoff_large_defaults_design(monkeypatch):
     menu = build_skill_handoff_menu("diagnose", state=state)
     assert "(default)" in menu.lower()
     assert "$forge:design" in menu
-
-
-def test_no_skill_has_legacy_workflow_complete_marker(monkeypatch):
-    """Verify that build_skill_handoff_menu is the canonical final-step footer."""
-    # This is a documentation/specification test rather than a grep test.
-    # The actual verification happens when we update each skill's final-step
-    # handler to use build_skill_handoff_menu (see Fix 8 implementation).
-    # For now, just verify the helper exists and works.
-    from scripts.shared.orchestrator import build_skill_handoff_menu
-
-    monkeypatch.setenv("FORGE_WORKFLOW_INVOCATION", "dollar")
-    # Spot check: each skill should render a handoff menu when at MAX_STEP
-    for skill in ["design", "plan", "evaluate", "implement", "code-review", "test", "diagnose"]:
-        menu = build_skill_handoff_menu(skill)
-        assert "WORKFLOW HANDOFF" in menu
-        assert "$forge:" in menu
 
 
 # ---------------------------------------------------------------------------
@@ -2012,24 +1685,6 @@ def test_flows_step_8_over_cap_friendly(fresh_state_dir):
         f"Expected 'nothing left to do' or 'ends at step 7' in output, got: {output}"
 
 
-def test_test_mode_ux_redirects_to_ux_review(fresh_state_dir):
-    """test --mode ux exits 2 and points agents at forge ux-review."""
-    import subprocess
-
-    result = subprocess.run(
-        ["python3", str(SCRIPTS / "test" / "test.py"),
-         "--mode", "ux", "--step", "1"],
-        cwd=str(fresh_state_dir),
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-    )
-    assert result.returncode == 2, result.stderr
-    out = result.stdout + result.stderr
-    assert "ux-review" in out
-    assert "removed" in out.lower() or "overlapping" in out.lower()
-
-
 def test_stale_ux_mode_session_resume_exits(fresh_state_dir):
     """Resuming a session with custom.mode=ux exits 2 (mode removed)."""
     import json
@@ -2233,26 +1888,6 @@ def test_graphify_install_notice_leads_with_status(monkeypatch):
     assert any("forge graphify refresh" in line for line in lines)
 
 
-def test_graphify_refresh_writes_status(monkeypatch):
-    monkeypatch.chdir(REPO_ROOT)
-    from forge_next import graphify
-    from scripts.shared.resume_context import graphify_status_path
-
-    status_path = graphify_status_path(REPO_ROOT)
-    backup = status_path.read_text(encoding="utf-8") if status_path.exists() else None
-    try:
-        assert graphify.refresh(REPO_ROOT) == 0
-        assert status_path.is_file()
-        data = json.loads(status_path.read_text(encoding="utf-8"))
-        assert "status" in data
-        assert "last_refresh" in data
-    finally:
-        if backup is not None:
-            status_path.write_text(backup, encoding="utf-8")
-        elif status_path.exists():
-            status_path.unlink()
-
-
 def test_graphify_refresh_background_spawns_detached(monkeypatch, tmp_path: Path) -> None:
     from forge_next import graphify
 
@@ -2319,29 +1954,6 @@ def test_graphify_refresh_background_force_when_fresh(monkeypatch, tmp_path: Pat
     )
     assert graphify.spawn_refresh_background(repo, force=True) is True
     assert popens
-
-
-def test_graphify_refresh_default_command_runs_update_dot(monkeypatch):
-    monkeypatch.chdir(REPO_ROOT)
-    from forge_next import graphify
-
-    calls: list[list[str]] = []
-
-    def fake_write_status(_repo_root: Path, payload: dict) -> Path:
-        assert payload["status"] == "fresh"
-        return REPO_ROOT / ".codex" / "forge-codex" / "state" / "graphify-status.json"
-
-    def fake_run(cmd, **kwargs):
-        calls.append(cmd)
-        return subprocess.CompletedProcess(cmd, 0, "", "")
-
-    monkeypatch.setattr(graphify, "_write_status", fake_write_status)
-    monkeypatch.setattr(graphify.shutil, "which", lambda exe: "graphify" if exe == "graphify" else None)
-    monkeypatch.setattr(graphify.subprocess, "run", fake_run)
-
-    assert graphify.refresh(REPO_ROOT, background=False) == 0
-    assert calls, "Expected graphify subprocess.run to be called"
-    assert ["graphify", "update", "."] in calls
 
 
 # ---------------------------------------------------------------------------

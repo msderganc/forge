@@ -104,6 +104,8 @@ def test_workflow_skill_preamble_exists():
     text = path.read_text(encoding="utf-8")
     assert "## Simplicity (YAGNI)" in text
     assert "One-liners where readable" in text
+    assert "5–10 min" in text
+    assert "Honor ceremony as a duration hint" in text
     packaged = REPO_ROOT / "forge_next" / "assets" / "templates" / "workflow-skill-preamble.md"
     assert packaged.is_file(), "Run scripts/release/sync_template_assets.py"
     assert packaged.read_text(encoding="utf-8") == text

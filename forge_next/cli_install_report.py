@@ -46,6 +46,7 @@ def build_install_payload(
     installed: dict[str, str],
     warnings: list[str],
     structural_result: Any | None,
+    pstack_skipped: bool = False,
 ) -> dict[str, Any]:
     graphify_available, graphify_status = graphify_availability()
     beads_available, beads_status, beads_details = beads_availability()
@@ -66,6 +67,8 @@ def build_install_payload(
         "structural_tools_onboarding": structural_tools_install_notice_lines(
             structural_result
         ),
+        "pstack_skipped": pstack_skipped,
+        "pstack": {"skipped": pstack_skipped},
         "error": None,
     }
 
@@ -89,6 +92,7 @@ def print_install_human(
     structural_skipped: bool,
     install_claude: bool,
     install_codex: bool,
+    pstack_skipped: bool = False,
 ) -> None:
     title = (
         "forge - install" if _ascii_mode() else "forge — install"
@@ -133,6 +137,11 @@ def print_install_human(
             "  - Structural tools were skipped; re-run `forge install` without "
             "--skip-structural-tools or use `forge structural-tools install`"
         )
+    if pstack_skipped:
+        print(
+            "  - pstack skills were skipped or failed; re-run `forge install` "
+            "without --skip-pstack (see docs/pstack.md)"
+        )
     beads_ok, _, _ = beads_availability()
     if not beads_ok:
         print(
@@ -167,6 +176,7 @@ def emit_install_result(
     install_codex: bool,
     structural_result: Any | None,
     structural_skipped: bool,
+    pstack_skipped: bool = False,
 ) -> None:
     path_warns = _path_onboarding_warnings()
     if path_warns:
@@ -182,4 +192,5 @@ def emit_install_result(
         structural_skipped=structural_skipped,
         install_claude=install_claude,
         install_codex=install_codex,
+        pstack_skipped=pstack_skipped,
     )

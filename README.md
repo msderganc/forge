@@ -23,7 +23,16 @@ On disk, Codex skill folders use hyphens (`forge-diagnose/`) because `:` isn't v
 
 ## Overview
 
-Forge skills share one process spine — Frame, Orient, Deepen, Decide, Act, Verify, Handoff — and a `--ceremony` flag (`light` to `comprehensive`) that scales how much of that spine runs. See [`docs/ceremony.md`](docs/ceremony.md).
+Forge skills share one process spine — Frame, Orient, Deepen, Decide, Act, Verify, Handoff — and a `--ceremony` flag that selects a **job**, not four volumes of the same spine. `--ceremony` wins over estimate. Honor **light** as produce-and-stop — do not auto-continue unused steps. Mode axes (evaluate `pre`/`post`, test `run`/`flows`) stay orthogonal. Full contract: [`docs/ceremony.md`](docs/ceremony.md).
+
+| Band | Job | What changes |
+|------|-----|----------------|
+| **light** | Produce | Parent only, no review round, stop at the artifact. **Plan** is the only skill that collapses steps: 7 → 3 (Frame+Orient → Act → Handoff). |
+| **medium** | Pipeline | Full slots, one pass. Plan stays 7 steps. |
+| **detailed** | Handoff-grade | Independent second role + resume sidecars. |
+| **comprehensive** | Adversarial | N independent attempts, then graft. |
+
+Unused band names alias down to the highest job that skill actually implements. Integrity floors (design spec gate, diagnose high-severity techniques, plan skeleton) stay hard at light.
 
 A few things carry across every skill:
 
@@ -33,7 +42,7 @@ A few things carry across every skill:
 - **Sub-agents report progress.** Dispatched agents write heartbeats so a parent chat isn't silent mid-task.
 - **Every run leaves an audit trail** in `memory/<skill>-runs.jsonl` (last 30 entries).
 
-Graphify, Beads, and structural-quality probes (knip, madge, jscn, pyscn, skylos) are optional add-ons that several skills touch — they're covered together in [Integrations](#integrations) rather than repeated here.
+Graphify, Beads, pstack, and structural-quality probes (knip, madge, jscn, pyscn, skylos) are optional add-ons that several skills touch — they're covered together in [Integrations](#integrations) rather than repeated here.
 
 ---
 
@@ -69,7 +78,7 @@ forge install --codex
 
 `--cursor` installs the Cursor plugin and bundles workflow skills into it directly. `--codex` installs skills under `~/.codex/skills/forge/`. `--claude` installs commands under `~/.claude/commands/forge/` and wires up Graphify hooks. Useful flags: `--ref`, `--repo-url`, `--cursor-dir`, `--claude-dir`, `--codex-dir`.
 
-`forge install` also sets up structural-quality probes and prints Graphify onboarding hints — see [Integrations](#integrations) for what those do and how to skip them.
+`forge install` also copies allowlisted pstack skills, sets up structural-quality probes, and prints Graphify onboarding hints — see [Integrations](#integrations) for what those do and how to skip them.
 
 Running from Windows installs to Windows app locations; running from WSL installs to WSL locations.
 
@@ -79,7 +88,7 @@ Running from Windows installs to Windows app locations; running from WSL install
 2. `/forge:plan` or `$forge:plan` to start.
 3. Follow the printed steps and re-run the same command, or the next one the handoff suggests.
 
-To upgrade later: `pipx upgrade forge-next`. To pin a version: `pipx install 'forge-next==1.12.0'`.
+To upgrade later: `pipx upgrade forge-next`. To pin a version: `pipx install 'forge-next==1.16.1'`.
 
 ---
 
@@ -152,9 +161,9 @@ Back-and-forth discovery: surface opportunities, brainstorm requirements, and sc
 
 **When to use:** after sketch (if you ran it), or whenever you have a defined problem to investigate. Read-only on the codebase unless you explicitly allow edits.
 
-**Artifacts:** session memory; `memory/design-scope.json`; for medium/large scope, a named spec at `docs/forge/specs/YYYY-MM-DD-<slug>-design.md` with gates at steps 6–8.
+**Artifacts:** session memory; `memory/design-scope.json`; for medium/large scope, a named spec at `docs/forge/specs/YYYY-MM-DD-<slug>-design.md` with gates at steps 6–8 (those floors stay hard even at `--ceremony light`).
 
-**Notable flags:** `--quick`; `--auto1`/`--auto2`/`--auto3` for autonomy; step-8 bypasses `--allow-spec-incomplete` / `--allow-issues-incomplete` (each needs an override reason and a follow-up).
+**Notable flags:** `--ceremony light|medium|detailed|comprehensive` (job; `--quick` maps to light); `--auto1`/`--auto2`/`--auto3` for autonomy; step-8 bypasses `--allow-spec-incomplete` / `--allow-issues-incomplete` (each needs an override reason and a follow-up). Honor light as produce-and-stop.
 
 **Default handoff:** [plan](#plan) (evaluate-pre is a common alternative). `forge develop` still works as a deprecated CLI alias, but there's no `/forge:develop` command.
 
@@ -172,7 +181,7 @@ Turns an approved direction into a concrete implementation plan: waves, tasks, a
 
 **Artifacts:** plan file under `memory/plans/`; `memory/planner.md`.
 
-**Notable flags:** `--quick`; `--ceremony light|medium|detailed|comprehensive`; `--save-ceremony-preference`.
+**Notable flags:** `--quick`; `--ceremony light|medium|detailed|comprehensive`; `--save-ceremony-preference`. Light collapses the run to three steps (Frame+Orient → Act → Handoff); medium+ stays seven. Honor light as produce-and-stop.
 
 **Default handoff:** [evaluate](#evaluate) `--mode pre` (implement is a common alternative).
 
@@ -190,6 +199,8 @@ Structured critique — `--mode pre` before implementation, `--mode post` after.
 
 **Artifacts:** `.evaluate-state.json` and per-step findings sidecars.
 
+**Notable flags:** `--mode pre|post` (orthogonal to ceremony); `--ceremony light|medium|detailed|comprehensive`. Honor light as produce-and-stop.
+
 **Default handoff:** pre → implement; post → code-review.
 
 **Methodologies:** feasibility ratings, completeness audit, correctness/quality/performance/operational-readiness lenses, optional team dispatch.
@@ -205,6 +216,8 @@ Structured critique — `--mode pre` before implementation, `--mode post` after.
 Executes the plan in waves, with a review loop after each task.
 
 **Artifacts:** `handoff-implement.md`; documentation gate at step 8.
+
+**Notable flags:** `--plan <path>`; `--ceremony light|medium|detailed|comprehensive`. Honor light as produce-and-stop (step count stays 8).
 
 **Default handoff:** [code-review](#code-review).
 
@@ -222,7 +235,7 @@ Structured PR/diff/architecture review with two passes: Pass A checks the change
 
 **Artifacts:** `memory/code-review-report.md`.
 
-**Notable flags:** `--effort light|standard|thorough` (or `--quick` for light). Light is Architect + QA; standard adds Security when auth/data is in play; thorough is the full six-role team. Structural probes run by default and can hold steps 4–6 — `--no-structural` turns them off, `--allow-structural-probes-incomplete` bypasses a pending gate. See [Integrations](#integrations).
+**Notable flags:** `--ceremony light|medium|detailed|comprehensive` (job; honor light as produce-and-stop). `--effort light|standard|thorough` (or `--quick` for light) still sets reviewer fan-out: Architect + QA at light; standard adds Security when auth/data is in play; thorough is the full six-role team. Structural probes run by default and can hold steps 4–6 — `--no-structural` turns them off, `--allow-structural-probes-incomplete` bypasses a pending gate. See [Integrations](#integrations).
 
 **Default handoff:** [test](#test) (ship is a common alternative).
 
@@ -237,6 +250,8 @@ Structured PR/diff/architecture review with two passes: Pass A checks the change
 Runs the test suite (default `run` mode), or authors mock flows with `--mode flows`.
 
 **Artifacts:** `memory/test-report.md`; flows mode also updates the scenario index when it parses cleanly.
+
+**Notable flags:** `--mode run|flows` (orthogonal to ceremony); `--ceremony light|medium|detailed|comprehensive`. Honor light as produce-and-stop.
 
 **Default handoff:** ship when green, [diagnose](#diagnose) on failures.
 
@@ -273,6 +288,8 @@ Real-browser audit of a running web app. It maps purpose, users, IA, and journey
 | Invoke | `/forge:diagnose` | `$forge:diagnose` | `forge diagnose --step 1` |
 
 Evidence-led root-cause analysis with gated JSON sidecars, for incidents, regressions, and flaky failures.
+
+**Notable flags:** `--ceremony light|medium|detailed|comprehensive`. Honor light as produce-and-stop; high-severity technique gates stay hard.
 
 **Default handoff:** design when the fix is classified `large`, plan when `complex`.
 
@@ -354,6 +371,16 @@ Graphify indexes the repo into `graphify-out/` (god nodes, communities) so agent
 - Add a repo-root `.graphifyignore` for `.forge/`, `.codex/`, `.venv/`, build output, and other dumps — Graphify ignores `.gitignore`.
 
 Full guide: [`docs/graphify.md`](docs/graphify.md).
+
+### pstack — optional agent skills (poteto)
+
+[pstack](https://github.com/cursor/plugins/tree/main/pstack/skills) is a Cursor
+marketplace plugin. `forge install` copies an **allowlist** of optional pstack skills from
+[cursor/plugins](https://github.com/cursor/plugins) **by default** (not the marketplace).
+Forge does not vendor these skill bodies into the forge-next source tree. Skip with `--skip-pstack` or
+`FORGE_SKIP_PSTACK=1`. Named Forge skills always win. If pstack is not installed, skip —
+Forge continues unchanged. Canonical map: [`templates/pstack-contract.md`](templates/pstack-contract.md).
+Guide: [`docs/pstack.md`](docs/pstack.md). pstack is not a `/forge:` command.
 
 ### Beads — issue tracking
 
@@ -475,10 +502,13 @@ After `forge install --cursor`, the plugin under `~/.cursor/plugins/local/forge/
 | **1.12.1** | Expose `--ceremony` on the `forge` CLI and ask plan for light/medium/detailed/comprehensive (not legacy normal/lite) |
 | **1.12.2** | Plan CLI `--ceremony` skips re-prompt and syncs `plan_mode`; e2e asserts outer CLI ceremony flags |
 | **1.12.3** | Add `scripts/e2e_cli_skill_matrix.py` — 3+ forge-CLI scenarios per skill (ceremony/mode/reject) |
-| **1.14.0** | Claude Code: `using-forge` meta-skill + `forge-*` skills under `~/.claude/skills/` for auto-routing (plan/implement/…) |
-| **1.13.2** | Harden Beads install probe (UTF-8 decode; multi-token `FORGE_BD_COMMAND` display) |
-| **1.13.1** | Install/doctor UX: emoji sections, structural-tool ✓/✗ marks, surface Beads (`bd`) availability |
 | **1.13.0** | Plan is ceremony-only: removed `--mode default\|lite` and `--save-mode-preference`; use `--ceremony` / `--save-ceremony-preference` |
+| **1.13.1** | Install/doctor UX: emoji sections, structural-tool ✓/✗ marks, surface Beads (`bd`) availability |
+| **1.13.2** | Harden Beads install probe (UTF-8 decode; multi-token `FORGE_BD_COMMAND` display) |
+| **1.14.0** | Claude Code: `using-forge` meta-skill + `forge-*` skills under `~/.claude/skills/` for auto-routing (plan/implement/…) |
+| **1.15.0** | `forge install` copies an allowlist of optional pstack companion skills by default (skip with `--skip-pstack`). Named Forge skills always win; if pstack is missing, skip. Canonical map: `templates/pstack-contract.md`. Forge does not vendor pstack bodies. |
+| **1.16.0** | Ceremony bands are jobs (Produce / Pipeline / Handoff-grade / Adversarial), not four volumes of the same spine. Only **plan light** collapses steps (7 → 3: Frame+Orient → Act → Handoff); other aligned skills keep their step count and honor light as produce-and-stop. `--ceremony` wins over estimate. Mode axes (evaluate pre/post, test run/flows) stay orthogonal. |
+| **1.16.1** | README documents all four ceremony jobs on each aligned skill; prune overlapping tests |
 
 *(There was no 1.5 release — numbering jumped 1.4 to 1.6.)*
 
@@ -502,6 +532,7 @@ Outside the apps, call `forge <subcommand>` with a space — same engine as any 
 | `FORGE_SKIP_AUTO_CLOSE=1` | Disable step-1 auto-close of superseded sessions |
 | `FORGE_SKIP_SUBAGENT_LIFECYCLE=1` | Disable Cursor subagent lifecycle/progress reminders |
 | `FORGE_SKIP_STRUCTURAL_TOOLS=1` | Skip structural probe install and runs |
+| `FORGE_SKIP_PSTACK=1` | Skip copying allowlisted pstack skills during `forge install` |
 | `FORGE_SKILL_ENGINE=0` | Force legacy per-skill orchestrator bodies |
 
 Full list: [`docs/environment.md`](docs/environment.md). Declarative manifests: [`docs/declarative-skills.md`](docs/declarative-skills.md). Ceremony: [`docs/ceremony.md`](docs/ceremony.md).

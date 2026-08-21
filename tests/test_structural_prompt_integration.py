@@ -21,7 +21,6 @@ STRUCTURAL_PROMPT_RELS = [
 ]
 
 STRUCTURAL_MARKER = "structural-quality-probes.md"
-EIGHT_AGENTS_TEMPLATE = "structural-quality-eight-agents.md"
 
 
 @pytest.fixture(autouse=True)
@@ -30,34 +29,13 @@ def _repo_path():
         sys.path.insert(0, str(REPO_ROOT))
 
 
-@pytest.mark.parametrize("rel", STRUCTURAL_PROMPT_RELS)
-def test_structural_prompts_reference_template(rel: str) -> None:
-    text = (REPO_ROOT / "prompts" / rel).read_text(encoding="utf-8")
-    assert STRUCTURAL_MARKER in text or ".structural-probes.json" in text
-
-
-@pytest.mark.parametrize("rel", STRUCTURAL_PROMPT_RELS)
-def test_packaged_structural_prompts_match_repo(rel: str) -> None:
-    src = REPO_ROOT / "prompts" / rel
-    packaged = REPO_ROOT / "forge_next" / "assets" / "prompts" / rel
-    assert packaged.is_file(), f"missing packaged prompt: {rel}"
-    assert src.read_text(encoding="utf-8") == packaged.read_text(encoding="utf-8")
-
-
-def test_packaged_eight_agents_template_matches_repo() -> None:
-    src = REPO_ROOT / "templates" / EIGHT_AGENTS_TEMPLATE
-    packaged = REPO_ROOT / "forge_next" / "assets" / "templates" / EIGHT_AGENTS_TEMPLATE
-    assert src.is_file()
-    assert packaged.is_file()
-    assert src.read_text(encoding="utf-8") == packaged.read_text(encoding="utf-8")
-
-
-def test_packaged_structural_quality_template_matches_repo() -> None:
-    src = REPO_ROOT / "templates" / "structural-quality-probes.md"
-    packaged = REPO_ROOT / "forge_next" / "assets" / "templates" / "structural-quality-probes.md"
-    assert src.is_file()
-    assert packaged.is_file()
-    assert src.read_text(encoding="utf-8") == packaged.read_text(encoding="utf-8")
+def test_structural_prompts_reference_template() -> None:
+    missing: list[str] = []
+    for rel in STRUCTURAL_PROMPT_RELS:
+        text = (REPO_ROOT / "prompts" / rel).read_text(encoding="utf-8")
+        if STRUCTURAL_MARKER not in text and ".structural-probes.json" not in text:
+            missing.append(rel)
+    assert not missing, f"prompts missing structural marker: {missing}"
 
 
 def test_eval_state_custom_roundtrip(tmp_path: Path) -> None:

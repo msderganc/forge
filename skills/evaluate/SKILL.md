@@ -16,6 +16,10 @@ description: |
 
 Shared runtime: [templates/workflow-skill-preamble.md](../../templates/workflow-skill-preamble.md).
 
+## pstack companion
+
+pstack `/eval` is for skill/prompt behavior tests, not a substitute for Forge evaluate (plan vs code). Canonical map: `templates/pstack-contract.md`. If pstack is not installed, skip.
+
 **Modes:** `pre` (7 steps), `post` (8 steps). **`--mode review` is deprecated** — use **`forge code-review`** for full-team review.
 
 In **post** step 4, read `.structural-probes.json` when a structural-probes banner is shown.

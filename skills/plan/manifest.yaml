@@ -1,5 +1,7 @@
 manifest_version: 1
 skill: plan
+# Parser/medium max_step stays 7. skill_runner collapses plan+light to 3
+# (Frame+Orient / Act / Handoff); ceremony must not steal a mode variant key.
 max_step: 7
 cli_flags:
   - name: "--force"

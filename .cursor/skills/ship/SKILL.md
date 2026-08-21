@@ -46,6 +46,10 @@ Or invoke **`$forge:ship`** / this skill with graphify first. Workflow skills no
 
 Skip with `FORGE_SKIP_GRAPHIFY=1` or `forge graphify off`.
 
+## pstack companion
+
+Optionally run `/unslop` on commit/PR prose and `/technical-writing` for the PR body. Forge ship still owns merge/publish; never pstack babysit or autopilot. Canonical map: `templates/pstack-contract.md`. If pstack is not installed, skip.
+
 ## Phase 1 — Preflight
 
 Run in parallel when possible:

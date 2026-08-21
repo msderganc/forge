@@ -46,10 +46,13 @@ this release. Guide: [`docs/declarative-skills.md`](docs/declarative-skills.md).
 
 Aligned skills share one process spine (Frame → Orient → Deepen → Decide → Act →
 Verify → Handoff); see [`templates/skill-process-spine.md`](templates/skill-process-spine.md).
-**Ceremony** (`light` | `medium` | `detailed` | `comprehensive`) is the binding
-depth knob — CLI `--ceremony` wins over estimate; persist `ceremony` /
-`ceremony_rationale` / `ceremony_source` on state. Mode axes (`evaluate`
-pre/post, `test` run/flows) stay orthogonal to ceremony. Prefer `--ceremony`
+**Ceremony** (`light` | `medium` | `detailed` | `comprehensive`) is a binding
+**job** (Produce / Pipeline / Handoff-grade / Adversarial), not four volumes of
+the same spine. CLI `--ceremony` wins over estimate; persist `ceremony` /
+`ceremony_rationale` / `ceremony_source` on state. **Plan light** collapses to
+three slots (Frame+Orient → Act → Handoff). Honor light as produce-and-stop.
+Mode axes (`evaluate` pre/post, `test` run/flows) stay orthogonal to ceremony.
+Prefer `--ceremony`
 over fragmented user vocab (`scope_tier`, plan `lite`, CR `--effort` as primary).
 Integrity gates stay hard unless allowlisted `soft_when`. Full guide:
 [`docs/ceremony.md`](docs/ceremony.md).
@@ -67,6 +70,10 @@ Integrity gates stay hard unless allowlisted `soft_when`. Full guide:
 **Docs:** [`docs/graphify.md`](docs/graphify.md) is the canonical user guide (refresh, hooks, orchestrator banners, CI flags, upgrade path).
 
 **Structural quality (knip / madge / pyscn / skylos):** installed by default with `forge install` (warns if any tool missing); `forge structural-tools install` to refresh; skip with `forge install --skip-structural-tools` or `FORGE_SKIP_STRUCTURAL_TOOLS=1`. Shell helpers: `scripts/install/structural_tools.sh` and `.ps1`. Templates: `templates/structural-quality-probes.md`, `templates/structural-quality-eight-agents.md` (eight parallel Civil Learning subagents at dispatch); sidecars `.structural-probes.json`, `.structural-eight-agents.json`. See [`docs/structural-quality.md`](docs/structural-quality.md).
+
+## pstack
+
+Optional companion skills from [pstack](https://github.com/cursor/plugins/tree/main/pstack/skills). Canonical map: [`templates/pstack-contract.md`](templates/pstack-contract.md). `forge install` copies an allowlist by default. If pstack is not installed, skip. Named Forge skills always win.
 
 ## Process-first skill choice (Superpowers-style)
 

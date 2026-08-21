@@ -21,6 +21,10 @@ Routing: [AGENTS.md](../../AGENTS.md) § Process-first.
 
 Shared runtime: [templates/workflow-skill-preamble.md](../../templates/workflow-skill-preamble.md). Agent roster: [templates/forge-agent-roster.md](../../templates/forge-agent-roster.md).
 
+## pstack companion
+
+When competing shapes remain, optionally run `/arena`. Not a substitute for Forge design. Canonical map: `templates/pstack-contract.md`. If pstack is not installed, skip.
+
 ## No repo edits without permission
 
 Do **not** modify tracked project files unless the user explicitly authorizes. Session memory and `docs/forge/specs/` only when the orchestrator directs.

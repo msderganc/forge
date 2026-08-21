@@ -12,13 +12,17 @@ description: |
 - **Do not use when:** direction is still undecided (go to `design`) or the fix is a 1–2 file trivial change that doesn't need a plan file at all.
 - **Input:** approved design direction or a standalone request. **Output artifact:** implementation plan file (tasks, waves, risks).
 - **Stops at:** handoff to `evaluate --mode pre` — plan never edits product source or runs git mutation commands.
-- **Small-path behavior:** `trivial`/small scope uses **`lite`** mode, ≤3 tasks, and skips heavy pre-review ceremony.
+- **Small-path behavior:** `--ceremony light` runs **3 slots** (Frame+Orient → Act → Handoff), maps to `lite` narrative, ≤3 tasks, and skips Architect / 4-role review / docs-planning phases.
 
 See `templates/scope-size-model.md` and `templates/workflow-skill-preamble.md` for shared sizing/ceremony rules.
 
 Routing: [AGENTS.md](../../AGENTS.md) § Process-first.
 
 Shared runtime: [templates/workflow-skill-preamble.md](../../templates/workflow-skill-preamble.md).
+
+## pstack companion
+
+Optionally reach for `/figure-it-out`, `/show-me-your-work`, and `/technical-writing`. Canonical map: `templates/pstack-contract.md`. If pstack is not installed, skip.
 
 ## Safety guardrails
 
