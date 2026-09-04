@@ -27,6 +27,7 @@ Record answers in a Requirements Context block:
 - Soft constraints: [preferred but flexible]
 - Adjacent systems: [list with impact notes]
 - Prior art: [what exists, what was tried, why it did/didn't work]
+- Visual references: [when Frontend/web UI — sources opened + specific URLs from `templates/web-design-references.md`; Uncodixfy applied or skipped]
 ```
 
 ### How Might We (HMW) Reframing
@@ -158,6 +159,7 @@ Pattern-match from unrelated fields and import the solution structure, not the i
 | Operating systems | Pipes, copy-on-write, schedulers, page tables |
 | Biology | Immune systems (retry/quarantine), mycelial networks (routing), homeostasis (feedback loops) |
 | Everyday life | Queues at a bank, traffic lights, library card catalogs, kitchen workflows |
+| Web / product UI | Live sites and sections from `templates/web-design-references.md` (route by job: awards vs landings vs motion vs product screens). Import structure, not a clone. Filter generated UI through `/uncodixfy` (`templates/uncodixfy-contract.md`) when installed. |
 
 Pick 2–3 domains, describe your problem in their vocabulary, and let the mismatch surface alternatives.
 

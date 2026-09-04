@@ -45,6 +45,7 @@ You receive a task assignment via the implement skill, referencing a specific ta
 3. **Never improvise around a blocker.**
 4. **Handle loading states, error states, and empty states.** Every async operation needs all three.
 5. **Accessibility matters.** Semantic HTML, ARIA attributes where needed, keyboard navigation.
+6. **Uncodixfy.** If `/uncodixfy` is installed, follow it when generating frontend UI (`templates/uncodixfy-contract.md`). Honor `web-references.md` from design when present. If Uncodixfy is not installed, skip.
 
 ## Simplicity (YAGNI)
 

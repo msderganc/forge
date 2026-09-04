@@ -48,10 +48,18 @@ COMMAND_OVERRIDES: dict[str, dict[str, str]] = {
     "design": {
         "tell_user": (
             "- **Design** explores problems, options, and evidence before formal planning.\n"
-            "- Medium/large scope requires a named spec at `docs/forge/specs/` before handoff."
+            "- Medium/large scope requires a named spec at `docs/forge/specs/` before handoff.\n"
+            "- For websites and web/app UI, look at matching galleries "
+            "(`templates/web-design-references.md`) and apply `/uncodixfy` when installed "
+            "(`templates/uncodixfy-contract.md`)."
         ),
         "agent_run": "Run **design** at step one. Summarize phases without quoting invocation lines.",
-        "codex_extra": "Do not modify tracked files without user permission. Spec gate for medium/large scope.",
+        "codex_extra": (
+            "Do not modify tracked files without user permission. Spec gate for medium/large scope.\n\n"
+            "When the work is a website or web/app UI, read `templates/web-design-references.md` "
+            "and apply `/uncodixfy` if installed (`templates/uncodixfy-contract.md`). "
+            "If Uncodixfy is not installed, skip."
+        ),
     },
     "plan": {
         "tell_user": "- **Plan** turns an approved direction into tasks — no code edits during planning.",
@@ -226,12 +234,14 @@ def _claude_skill_md(cmd: dict) -> str:
 
 def _write_if_changed(path: Path, text: str, *, check_only: bool, changed: list[str]) -> None:
     existing = path.read_text(encoding="utf-8") if path.is_file() else None
+    if existing is not None:
+        existing = existing.replace("\r\n", "\n").replace("\r", "\n")
     if existing == text:
         return
     changed.append(str(path.relative_to(REPO_ROOT)))
     if not check_only:
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(text, encoding="utf-8")
+        path.write_text(text, encoding="utf-8", newline="\n")
 
 
 def generate(*, check_only: bool = False) -> list[str]:

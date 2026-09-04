@@ -71,9 +71,17 @@ Integrity gates stay hard unless allowlisted `soft_when`. Full guide:
 
 **Structural quality (knip / madge / pyscn / skylos):** installed by default with `forge install` (warns if any tool missing); `forge structural-tools install` to refresh; skip with `forge install --skip-structural-tools` or `FORGE_SKIP_STRUCTURAL_TOOLS=1`. Shell helpers: `scripts/install/structural_tools.sh` and `.ps1`. Templates: `templates/structural-quality-probes.md`, `templates/structural-quality-eight-agents.md` (eight parallel Civil Learning subagents at dispatch); sidecars `.structural-probes.json`, `.structural-eight-agents.json`. See [`docs/structural-quality.md`](docs/structural-quality.md).
 
+## Line endings
+
+This repo is **LF only**. Do not rewrite files as CRLF — Git then diffs every line. Contract: `.gitattributes` (`* text=auto eol=lf`). Workspace: `.vscode/settings.json` (`files.eol`: `\n`) and `.editorconfig`.
+
 ## pstack
 
 Optional companion skills from [pstack](https://github.com/cursor/plugins/tree/main/pstack/skills). Canonical map: [`templates/pstack-contract.md`](templates/pstack-contract.md). `forge install` copies an allowlist by default. If pstack is not installed, skip. Named Forge skills always win.
+
+## Uncodixfy
+
+Optional UI skill from [Uncodixfy](https://github.com/cyxzdev/Uncodixfy). Canonical map: [`templates/uncodixfy-contract.md`](templates/uncodixfy-contract.md). `forge install` copies it by default. If Uncodixfy is not installed, skip. Named Forge skills always win. Design uses it with [`templates/web-design-references.md`](templates/web-design-references.md).
 
 ## Process-first skill choice (Superpowers-style)
 

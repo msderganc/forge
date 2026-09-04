@@ -24,6 +24,10 @@ from forge_next.cli_install_io import (
     with_downloaded_repo,
 )
 from forge_next.cli_install_pstack import run_pstack_install, uninstall_pstack
+from forge_next.cli_install_uncodixfy import (
+    run_uncodixfy_install,
+    uninstall_uncodixfy,
+)
 from forge_next.cli_install_report import (
     build_install_payload,
     emit_install_result,
@@ -95,6 +99,9 @@ def run_install(
     skip_pstack: bool,
     pstack_repo_url: str,
     pstack_ref: str,
+    skip_uncodixfy: bool,
+    uncodixfy_repo_url: str,
+    uncodixfy_ref: str,
     cursor_dir: str | None,
     claude_dir: str | None,
     codex_dir: str | None,
@@ -147,6 +154,20 @@ def run_install(
     warnings.extend(pstack_warnings)
     pstack_skipped = skip_pstack or not pstack_installed
 
+    uncodixfy_cursor = Path(cursor_dir).expanduser() if cursor_dir else None
+    uncodixfy_codex = Path(codex_dir).expanduser() if codex_dir else None
+    uncodixfy_installed, uncodixfy_warnings = run_uncodixfy_install(
+        skip=skip_uncodixfy,
+        repo_url=uncodixfy_repo_url,
+        ref=uncodixfy_ref,
+        cursor_plugins_dir=uncodixfy_cursor,
+        claude_skills_dir=None,
+        codex_skills_dir=uncodixfy_codex,
+    )
+    installed.update(uncodixfy_installed)
+    warnings.extend(uncodixfy_warnings)
+    uncodixfy_skipped = skip_uncodixfy or not uncodixfy_installed
+
     payload = build_install_payload(
         repo_url=repo_url,
         ref=ref,
@@ -154,6 +175,7 @@ def run_install(
         warnings=warnings,
         structural_result=structural_result,
         pstack_skipped=pstack_skipped,
+        uncodixfy_skipped=uncodixfy_skipped,
     )
     emit_install_result(
         payload,
@@ -163,6 +185,7 @@ def run_install(
         structural_result=structural_result,
         structural_skipped=structural_skipped,
         pstack_skipped=pstack_skipped,
+        uncodixfy_skipped=uncodixfy_skipped,
     )
 
 
@@ -245,6 +268,16 @@ def run_uninstall(
     )
     removed.update(pstack_removed)
     missing.extend(pstack_missing)
+
+    uncodixfy_removed, uncodixfy_missing = uninstall_uncodixfy(
+        cursor_plugins_dir=(
+            Path(cursor_dir).expanduser() if cursor_dir else None
+        ),
+        claude_skills_dir=None,
+        codex_skills_dir=(Path(codex_dir).expanduser() if codex_dir else None),
+    )
+    removed.update(uncodixfy_removed)
+    missing.extend(uncodixfy_missing)
 
     payload = {
         "command": "uninstall",

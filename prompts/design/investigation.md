@@ -33,3 +33,7 @@ Analyze the evidence using `templates/five-why-protocol.md`:
 - For features: use `templates/brainstorming.md` for requirements exploration
 
 Write findings to `{{MEMORY_DIR}}/investigation.md`
+
+## Web / UI prior art (when Frontend or a site/app UI is in scope)
+
+Read **`templates/web-design-references.md`**. Pick 2–4 matching galleries and look at live examples (browser tools when available). Start `{{MEMORY_DIR}}/web-references.md` with sources opened and specific URLs. Apply **`/uncodixfy`** when installed (`templates/uncodixfy-contract.md`); if it is not installed, skip.

@@ -22,6 +22,10 @@ Shared runtime: [templates/workflow-skill-preamble.md](../../templates/workflow-
 
 Optionally reach for `/swarm`, `/tdd`, `/typescript-best-practices`, and `/unslop`. Canonical map: `templates/pstack-contract.md`. If pstack is not installed, skip.
 
+## Uncodixfy companion
+
+When generating frontend UI, apply `/uncodixfy` if installed. Canonical map: `templates/uncodixfy-contract.md`. If Uncodixfy is not installed, skip.
+
 ## Simplicity
 
 Preamble § Simplicity (YAGNI). Smallest diff per task; escalate scope creep—no drive-by refactors.

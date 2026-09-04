@@ -138,3 +138,10 @@ Read **`templates/forge-agent-roster.md`** before recording or dispatching roles
 | Refactor | +Security (if auth/data) |
 
 Record team composition in project.md.
+
+## Web / UI references (when Frontend is selected)
+
+If any selected layer is **Frontend**, or the ask is a website/landing/product UI:
+
+- Read **`templates/web-design-references.md`** and plan which galleries to open in investigation/solutions (do not dump the catalog at the user).
+- Uncodixfy (`/uncodixfy`) applies before generated UI — `templates/uncodixfy-contract.md`. If Uncodixfy is not installed, skip.

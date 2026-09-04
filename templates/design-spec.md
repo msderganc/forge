@@ -72,3 +72,7 @@ After each chunk: “Any changes before we lock this section?” Then proceed. F
 ## Open questions
 
 - …
+
+## Visual references (web / UI only)
+
+When the spec covers a website, landing, or product UI, copy the short list from `web-references.md`: sources opened, specific examples, Uncodixfy constraints. Omit this section for non-UI work.

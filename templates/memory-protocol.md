@@ -17,6 +17,7 @@ Global `handoff-{skill}.md` may be a **pointer** to `sessions/{id}/handoff.md` â
 | solution-requirements.md | Architect | Requirements Context + How-Might-We framings (+ optional Job Story). Written in brainstorming Dispatch 1 (Phase 1); read by the PM to populate Gate 1 Q1 options |
 | divergent-ideas.md | Architect | Raw ideas grouped into solution families with technique tags. Written in brainstorming Dispatch 2 (Phase 2); read by the Architect itself when developing candidates in Dispatch 2 Step 3 and by Dispatch 3 when scoring |
 | solutions.md | Architect | Solution options per root cause. **Draft form** (candidates only, no scoring) written in brainstorming Dispatch 2 and read by the PM to populate Gate 2 Q1 options. **Final form** (Pugh Matrix + weighted rubric scores + recommendation) overwritten in brainstorming Dispatch 3 using the user's Gate 2 Q2 priority weights |
+| web-references.md | Architect | When Frontend/web UI: galleries opened, specific example URLs, Uncodixfy constraints |
 | plans/*.md | Planner | Implementation plans, logged by timestamp and summary (e.g. `20260414-1926-api-change-implementation.md`) |
 | planner.md | Planner | Planning decisions, task decomposition rationale, trade-offs |
 | backend-dev.md | Backend Dev | Implementation notes, files changed, tests written, deviations, blockers |

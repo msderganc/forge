@@ -368,6 +368,11 @@ def dispatch_command(cmd: str, args: Any) -> int:
                 args, "pstack_repo_url", "https://github.com/cursor/plugins"
             ),
             pstack_ref=getattr(args, "pstack_ref", "main"),
+            skip_uncodixfy=bool(getattr(args, "skip_uncodixfy", False)),
+            uncodixfy_repo_url=getattr(
+                args, "uncodixfy_repo_url", "https://github.com/cyxzdev/Uncodixfy"
+            ),
+            uncodixfy_ref=getattr(args, "uncodixfy_ref", "main"),
             cursor_dir=getattr(args, "cursor_dir", None),
             claude_dir=getattr(args, "claude_dir", None),
             codex_dir=getattr(args, "codex_dir", None),

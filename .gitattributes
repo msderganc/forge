@@ -1,0 +1,16 @@
+# This repository is LF-only. Prevents Windows/WSL checkouts from rewriting
+# every line as CRLF (git then diffs the entire file).
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.zip binary
+*.whl binary

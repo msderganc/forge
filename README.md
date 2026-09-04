@@ -88,7 +88,7 @@ Running from Windows installs to Windows app locations; running from WSL install
 2. `/forge:plan` or `$forge:plan` to start.
 3. Follow the printed steps and re-run the same command, or the next one the handoff suggests.
 
-To upgrade later: `pipx upgrade forge-next`. To pin a version: `pipx install 'forge-next==1.16.1'`.
+To upgrade later: `pipx upgrade forge-next`. To pin a version: `pipx install 'forge-next==1.17.0'`.
 
 ---
 
@@ -382,6 +382,17 @@ Forge does not vendor these skill bodies into the forge-next source tree. Skip w
 Forge continues unchanged. Canonical map: [`templates/pstack-contract.md`](templates/pstack-contract.md).
 Guide: [`docs/pstack.md`](docs/pstack.md). pstack is not a `/forge:` command.
 
+### Uncodixfy — optional UI skill (cyxzdev)
+
+[Uncodixfy](https://github.com/cyxzdev/Uncodixfy) blocks generic AI UI patterns. `forge install`
+copies the skill from git **by default**. Forge does not vendor the skill body. Skip with
+`--skip-uncodixfy` or `FORGE_SKIP_UNCODIXFY=1`. Re-run `forge install` to update; `forge uninstall`
+removes the copied dests. Named Forge skills always win. If Uncodixfy is not installed, skip.
+Canonical map: [`templates/uncodixfy-contract.md`](templates/uncodixfy-contract.md).
+Web galleries for design: [`templates/web-design-references.md`](templates/web-design-references.md).
+Guide: [`docs/uncodixfy.md`](docs/uncodixfy.md). Uncodixfy is not a `/forge:` command; invoke
+`/uncodixfy` when present.
+
 ### Beads — issue tracking
 
 [Beads](https://github.com/steveyegge/beads) (`bd` CLI) can sync epics, findings, tasks, and dependencies with Forge memory and handoffs. Without it, prompts use memory files and sequential IDs. Design records `beads_available` on startup; nothing hard-requires Beads.
@@ -509,6 +520,7 @@ After `forge install --cursor`, the plugin under `~/.cursor/plugins/local/forge/
 | **1.15.0** | `forge install` copies an allowlist of optional pstack companion skills by default (skip with `--skip-pstack`). Named Forge skills always win; if pstack is missing, skip. Canonical map: `templates/pstack-contract.md`. Forge does not vendor pstack bodies. |
 | **1.16.0** | Ceremony bands are jobs (Produce / Pipeline / Handoff-grade / Adversarial), not four volumes of the same spine. Only **plan light** collapses steps (7 → 3: Frame+Orient → Act → Handoff); other aligned skills keep their step count and honor light as produce-and-stop. `--ceremony` wins over estimate. Mode axes (evaluate pre/post, test run/flows) stay orthogonal. |
 | **1.16.1** | README documents all four ceremony jobs on each aligned skill; prune overlapping tests |
+| **1.17.0** | Design web-inspiration catalog; `forge install` copies Uncodixfy (`--skip-uncodixfy`). Galleries: `templates/web-design-references.md`. Contract: `templates/uncodixfy-contract.md`. |
 
 *(There was no 1.5 release — numbering jumped 1.4 to 1.6.)*
 
@@ -533,6 +545,7 @@ Outside the apps, call `forge <subcommand>` with a space — same engine as any 
 | `FORGE_SKIP_SUBAGENT_LIFECYCLE=1` | Disable Cursor subagent lifecycle/progress reminders |
 | `FORGE_SKIP_STRUCTURAL_TOOLS=1` | Skip structural probe install and runs |
 | `FORGE_SKIP_PSTACK=1` | Skip copying allowlisted pstack skills during `forge install` |
+| `FORGE_SKIP_UNCODIXFY=1` | Skip copying the Uncodixfy UI skill during `forge install` |
 | `FORGE_SKILL_ENGINE=0` | Force legacy per-skill orchestrator bodies |
 
 Full list: [`docs/environment.md`](docs/environment.md). Declarative manifests: [`docs/declarative-skills.md`](docs/declarative-skills.md). Ceremony: [`docs/ceremony.md`](docs/ceremony.md).
@@ -542,6 +555,8 @@ Full list: [`docs/environment.md`](docs/environment.md). Declarative manifests: 
 ## Contributing
 
 Orchestration lives in `scripts/shared/` (`skill_runner.py`, `orchestrator.py`, `skill_chain.py`, `session_store.py`, `ceremony.py`) and `scripts/takeover/`. Migrated skills declare phases in `skills/<skill>/manifest.yaml`; the shared spine is [`templates/skill-process-spine.md`](templates/skill-process-spine.md). Keep [AGENTS.md](AGENTS.md), [`docs/README.md`](docs/README.md), and `skills/` aligned with actual behavior.
+
+**Line endings:** LF only (`.gitattributes`, `.editorconfig`, `.vscode/settings.json`). Do not commit CRLF — Git will show every line as changed.
 
 **Versions:** bump semver in [`pyproject.toml`](pyproject.toml) (and the Cursor plugin's [`plugin.json`](integrations/cursor-plugin/.cursor-plugin/plugin.json) when that bundle changes) for anything that touches the PyPI package or editor integrations — patch for narrow fixes, minor for additive behavior, major for breaking contracts. See [Versioning](AGENTS.md#versioning) in AGENTS.md.
 

@@ -36,6 +36,12 @@ def test_install_cursor_plugin_bundles_skills(
     assert (
         skills_root / "forge-diagnose" / "templates" / "diagnose-execution-playbooks.md"
     ).is_file()
+    assert (
+        skills_root / "forge-design" / "templates" / "web-design-references.md"
+    ).is_file()
+    assert (
+        skills_root / "forge-design" / "templates" / "uncodixfy-contract.md"
+    ).is_file()
 
     manifest = (plugin / ".cursor-plugin" / "plugin.json").read_text(encoding="utf-8")
     assert '"skills"' in manifest

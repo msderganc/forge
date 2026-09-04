@@ -35,6 +35,7 @@ Conduct the five-why root cause analysis following `templates/five-why-protocol.
    - Stop at an actionable root cause that explains the full chain
 5. For bugfix tasks: follow `templates/systematic-debugging.md` structure
 6. For feature tasks: follow `templates/brainstorming.md` for requirements exploration
+7. For Frontend / web / landing / product UI: read `templates/web-design-references.md`, look at 2–4 matching galleries, write `web-references.md`. Apply `/uncodixfy` when installed (`templates/uncodixfy-contract.md`); if it is not installed, skip.
 
 **Output:** Write to `.forge/memory/investigation.md`
 
@@ -83,7 +84,7 @@ Between dispatches, the PM uses `templates/brainstorming-gates.md` to ask the us
 
 **Dispatch 1 — Phase 1 only.** Read `investigation.md` for confirmed root causes. Follow `templates/brainstorming.md` Phase 1 only: 6 exploration questions → Requirements Context block → 3–5 HMW framings with a suggested driver → optional Job Story for feature tasks. Write to `solution-requirements.md`. Stop at the Phase 1 → Phase 2 boundary. **Do not generate ideas or candidates.**
 
-**Dispatch 2 — Phase 2 + Phase 3 Steps 1–3.** The PM will pass user decisions from Gate 1 in the dispatch prompt: driver HMW, advanced techniques to add. The core three techniques (SCAMPER, Reverse Brainstorming, Constraint Removal) are always applied; bugfix tasks auto-apply 5W1H/Starbursting. Run Phase 2 generating raw ideas tagged by technique, clustered into families → write `divergent-ideas.md`. Then run Phase 3 Steps 1–3 (group → eliminate → ICE pre-filter if >4 survivors → develop candidates) and write a **draft** `solutions.md` with candidates but **no scores, no Pugh, no recommendation**. Stop at the Phase 3 Step 3 → Step 3b boundary.
+**Dispatch 2 — Phase 2 + Phase 3 Steps 1–3.** The PM will pass user decisions from Gate 1 in the dispatch prompt: driver HMW, advanced techniques to add. The core three techniques (SCAMPER, Reverse Brainstorming, Constraint Removal) are always applied; bugfix tasks auto-apply 5W1H/Starbursting. For Frontend/web UI work, read `templates/web-design-references.md` and apply `/uncodixfy` when installed before proposing looks. Run Phase 2 generating raw ideas tagged by technique, clustered into families → write `divergent-ideas.md`. Then run Phase 3 Steps 1–3 (group → eliminate → ICE pre-filter if >4 survivors → develop candidates) and write a **draft** `solutions.md` with candidates but **no scores, no Pugh, no recommendation**. Stop at the Phase 3 Step 3 → Step 3b boundary.
 
 **Dispatch 3 — Phase 3 Steps 3b–5.** The PM will pass user decisions from Gate 2 in the dispatch prompt: which candidates to score, which scoring weights to apply. Move unselected candidates to an "Also Considered" section at the bottom of `solutions.md`. Run the Pugh Matrix → score each selected candidate with `templates/scoring-rubric.md` using the supplied weights → check cross-solution conflicts and compound opportunities → recommend one solution per root cause with rationale that explicitly references the user's priority dimension. Overwrite `solutions.md` with the final version.
 
