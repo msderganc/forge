@@ -19,6 +19,7 @@ Runs at **ship** only (`forge ship --step 1`). This workflow does not print GRAP
 
 - **Design** explores problems, options, and evidence before formal planning.
 - Medium/large scope requires a named spec at `docs/forge/specs/` before handoff.
+- For websites and web/app UI, look at matching galleries (`templates/web-design-references.md`) and apply `/uncodixfy` when installed (`templates/uncodixfy-contract.md`).
 
 ## What you run (agent)
 

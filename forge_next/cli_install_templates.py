@@ -14,6 +14,8 @@ BUNDLED_SKILL_TEMPLATE_FILES = (
     "ux-review-coverage-checklist.md",
     "ux-review-report.md",
     "workflow-skill-preamble.md",
+    "web-design-references.md",
+    "uncodixfy-contract.md",
 )
 
 

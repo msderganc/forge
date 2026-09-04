@@ -45,6 +45,10 @@ See [`docs/graphify.md`](../docs/graphify.md). Refresh at **ship** (`forge ship 
 
 [pstack](https://github.com/cursor/plugins/tree/main/pstack/skills) (poteto). `forge install` copies an allowlist from git by default. Skip with `--skip-pstack`. Guide: [`docs/pstack.md`](../docs/pstack.md). Canonical map: [`templates/pstack-contract.md`](../templates/pstack-contract.md).
 
+### Uncodixfy (optional UI skill)
+
+[Uncodixfy](https://github.com/cyxzdev/Uncodixfy). `forge install` copies the skill from git by default. Skip with `--skip-uncodixfy`. Guide: [`docs/uncodixfy.md`](../docs/uncodixfy.md). Canonical map: [`templates/uncodixfy-contract.md`](../templates/uncodixfy-contract.md). Design galleries: [`templates/web-design-references.md`](../templates/web-design-references.md).
+
 ### Structural quality probes (optional)
 
 `forge install` installs **knip**, **madge**, and **pyscn** by default for Pass B review in code-review and evaluate (warns on any missing). See [`docs/structural-quality.md`](../docs/structural-quality.md).

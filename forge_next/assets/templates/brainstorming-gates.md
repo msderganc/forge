@@ -51,6 +51,7 @@ The Architect writes these files into `.forge/memory/` during Stage 2. The PM re
 | `divergent-ideas.md` | Dispatch 2 (Phase 2) | Raw ideas grouped into solution families, one family per `###` header, with the technique that produced each idea tagged inline |
 | `solutions.md` (draft) | Dispatch 2 (Phase 3 Steps 1–3) | Developed candidates with approach / pros / cons / open questions. **No scores yet.** |
 | `solutions.md` (final) | Dispatch 3 (Phase 3 Steps 3b–5) | Adds Pugh Matrix, weighted scoring tables, recommendation. Overwrites the draft. |
+| `web-references.md` | Investigation or Dispatch 1–2 when Frontend/web UI | Galleries opened, specific URLs, Uncodixfy constraints |
 
 **Resume rule.** If a session is resumed and one of these files already exists, skip the corresponding dispatch and move straight to the next gate. If `solutions.md` already has scoring tables, treat the whole stage as complete.
 

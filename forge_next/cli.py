@@ -407,6 +407,23 @@ def build_parser() -> argparse.ArgumentParser:
         default="main",
         help="Git ref/branch for the pstack repo (default: main)",
     )
+    ins.add_argument(
+        "--skip-uncodixfy",
+        action="store_true",
+        help="Skip installing the Uncodixfy UI skill from git (default: install with forge install)",
+    )
+    ins.add_argument(
+        "--uncodixfy-repo-url",
+        type=str,
+        default="https://github.com/cyxzdev/Uncodixfy",
+        help="GitHub repo URL for Uncodixfy (default: https://github.com/cyxzdev/Uncodixfy)",
+    )
+    ins.add_argument(
+        "--uncodixfy-ref",
+        type=str,
+        default="main",
+        help="Git ref/branch for the Uncodixfy repo (default: main)",
+    )
 
     # structural-tools — knip, madge, pyscn for Pass B quality probes
     st_tools = sub.add_parser(

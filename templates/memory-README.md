@@ -14,6 +14,7 @@ This directory contains the shared memory files for a forge-codex team session.
 | `solution-requirements.md` | Architect | Brainstorming Phase 1 output — Requirements Context + How-Might-We framings. Written in Dispatch 1, consumed by brainstorming Gate 1 |
 | `divergent-ideas.md` | Architect | Brainstorming Phase 2 output — raw ideas grouped into solution families. Written in Dispatch 2, consumed by the Architect in Dispatch 3 (not by a gate directly) |
 | `solutions.md` | Architect | Solution options per root cause. Exists in two states: **draft** (written in Dispatch 2 Phase 3 Steps 1–3, consumed by brainstorming Gate 2) and **final** (overwritten in Dispatch 3 with Pugh Matrix, weighted scoring, recommendation) |
+| `web-references.md` | Architect | When Frontend/web UI: galleries opened, specific example URLs, Uncodixfy constraints |
 | `plans/*.md` | Planner | Implementation plans, logged by timestamp and summary (e.g. `20260414-1926-api-change-implementation.md`) |
 | `planner.md` | Planner | Planning decisions, task decomposition rationale, trade-offs |
 | `backend-dev.md` | Backend Dev | Implementation notes, files changed, tests, deviations |

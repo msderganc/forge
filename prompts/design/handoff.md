@@ -12,6 +12,7 @@ Write `{{MEMORY_DIR}}/handoff-design.md` with:
 - Scope assessment
 - Task type
 - Key investigation findings
+- Visual references (`web-references.md`) when Frontend/web UI was in scope, including Uncodixfy constraints
 
 ## Dashboard
 Render skill completion dashboard per `templates/dashboard.md`.

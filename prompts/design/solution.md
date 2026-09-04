@@ -14,12 +14,20 @@
 | `templates/brainstorming-gates.md` | PM only — decision gates |
 | `templates/scoring-rubric.md` | Architect — weighted scoring |
 | `templates/studio.md` | PM — browser gate transport |
+| `templates/web-design-references.md` | Architect — when Frontend / web / landing / product UI |
+| `templates/uncodixfy-contract.md` | Architect — `/uncodixfy` anti-slop filter when generating UI |
 
 **Guards:** No implementation in Stage 2. One question at a time during PM gates. YAGNI on speculative scope — do **not** grow the solution surface past **Recommended scope** (see `templates/scope-size-model.md`). Score and recommend the **minimal** option that hits Recommended scope; list broader ideas as Scope expansion, not as the default pick. Evidence from Stage 1 or explicit user statements. Prefer solution shapes that stay under the structural charter (complexity budget, avoid clone-prone designs, acyclic deps, no speculative public surface — `templates/structural-build-charter.md`). No probe runs in design. For **trivial** scope, keep candidate count lean (often 2 directions max). If one unresolved logic/state or UI-shape question blocks choosing, **offer** future `forge:prototype` (`docs/forge/prototype-skill-stub.md`).
 
 **Roster:** All dispatches in this stage use **Architect** only (`agents/architect.md`). See **`templates/forge-agent-roster.md`** — never spawn invented names like `backend-architect`.
 
-**Artifacts** (`{{MEMORY_DIR}}/`): `solution-requirements.md` → `divergent-ideas.md` → `solutions.md` (draft then final).
+**Artifacts** (`{{MEMORY_DIR}}/`): `solution-requirements.md` → `divergent-ideas.md` → `solutions.md` (draft then final). When Frontend/web UI is in scope, also `web-references.md` (galleries + Uncodixfy).
+
+## Web / UI (when Frontend or a site/app UI is in scope)
+
+1. Read `templates/web-design-references.md`. Pick **2–4** sources from the routing table and **open them** (browser tools when available). Record 3–5 specific references in `{{MEMORY_DIR}}/web-references.md`.
+2. If `/uncodixfy` is available, apply it before proposing mockups, Studio screens, or component-kit looks (`templates/uncodixfy-contract.md`). If it is not installed, skip.
+3. Marketing/landing may be more expressive; app/dashboard chrome stays Uncodixfy-normal. Do not clone award sites into product chrome.
 
 ## Loop checklist
 

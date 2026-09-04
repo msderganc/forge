@@ -215,6 +215,78 @@ def run_status(repo_root: Path, json_output: bool = False) -> None:
         os.chdir(old)
 
 
+_ENV_CHECK_LABELS = {
+    "pythonutf8": "PYTHONUTF8",
+    "forge_use_launcher": "FORGE_USE_LAUNCHER",
+    "forge_ascii": "FORGE_ASCII",
+}
+
+
+def _doctor_label(key: str) -> str:
+    return _ENV_CHECK_LABELS.get(key, key.replace("_", " "))
+
+
+def _doctor_scalar(value: object) -> str:
+    if value is None:
+        return "(unset)"
+    if isinstance(value, bool):
+        return "yes" if value else "no"
+    return str(value)
+
+
+def _doctor_sequence(key: str, value: list | tuple) -> str | None:
+    """Return a one-line rendering, or None when items need nested lines."""
+    if not value:
+        return "(none)"
+    if all(isinstance(item, str) for item in value):
+        if key.endswith("_command") or key.endswith("_argv"):
+            return " ".join(value)
+        return ", ".join(value)
+    if all(not isinstance(item, (dict, list, tuple)) for item in value):
+        return ", ".join(_doctor_scalar(item) for item in value)
+    return None
+
+
+def format_doctor_check_lines(
+    checks: dict[str, object], *, indent: int = 0
+) -> list[str]:
+    """Render doctor checks as indented human text, not Python reprs."""
+    lines: list[str] = []
+    pad = "  " * indent
+    for key, value in checks.items():
+        label = _doctor_label(key)
+        if isinstance(value, dict):
+            if indent == 0 and lines and lines[-1] != "":
+                lines.append("")
+            lines.append(f"{pad}{label}:")
+            lines.extend(format_doctor_check_lines(value, indent=indent + 1))
+            continue
+        if isinstance(value, (list, tuple)):
+            rendered = _doctor_sequence(key, value)
+            if rendered is not None:
+                lines.append(f"{pad}{label}: {rendered}")
+                continue
+            if indent == 0 and lines and lines[-1] != "":
+                lines.append("")
+            lines.append(f"{pad}{label}:")
+            for item in value:
+                if isinstance(item, dict):
+                    lines.append(f"{pad}  -")
+                    lines.extend(
+                        format_doctor_check_lines(item, indent=indent + 2)
+                    )
+                elif isinstance(item, (list, tuple)):
+                    nested = _doctor_sequence(key, item)
+                    lines.append(
+                        f"{pad}  - {nested if nested is not None else _doctor_scalar(item)}"
+                    )
+                else:
+                    lines.append(f"{pad}  - {_doctor_scalar(item)}")
+            continue
+        lines.append(f"{pad}{label}: {_doctor_scalar(value)}")
+    return lines
+
+
 def run_doctor(repo_root: Path, json_output: bool = False) -> None:
     from scripts.shared.session_store import run_session_cleanup
 
@@ -278,8 +350,8 @@ def run_doctor(repo_root: Path, json_output: bool = False) -> None:
     title = "forge - doctor" if os.environ.get("FORGE_ASCII") == "1" else "forge — doctor"
     print(title)
     print("=" * 60)
-    for k, v in checks.items():
-        print(f"{k}: {v}")
+    for line in format_doctor_check_lines(checks):
+        print(line)
     if warnings:
         print("")
         print("Warnings:")

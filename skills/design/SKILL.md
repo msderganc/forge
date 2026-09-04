@@ -25,6 +25,12 @@ Shared runtime: [templates/workflow-skill-preamble.md](../../templates/workflow-
 
 When competing shapes remain, optionally run `/arena`. Not a substitute for Forge design. Canonical map: `templates/pstack-contract.md`. If pstack is not installed, skip.
 
+## Web / UI references
+
+When the work is a **website, landing page, or web/app UI**, read **`templates/web-design-references.md`** and look at the matching galleries (awards, landings, motion, sections, product screens — pick 2–4, do not dump the list). Write findings to session `web-references.md`.
+
+Apply **[Uncodixfy](https://github.com/cyxzdev/Uncodixfy)** (`/uncodixfy`) before generating or locking a look so the UI does not default to generic AI chrome. Canonical map: `templates/uncodixfy-contract.md`. `forge install` copies the skill by default; skip with `--skip-uncodixfy`. If Uncodixfy is not installed, skip.
+
 ## No repo edits without permission
 
 Do **not** modify tracked project files unless the user explicitly authorizes. Session memory and `docs/forge/specs/` only when the orchestrator directs.
